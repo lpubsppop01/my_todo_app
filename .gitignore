@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.ropeproject
+.cache
+
+.idea/**/workspace.xml
+.idea/**/dictionaries
+
+.ipynb_checkpoints/
+
+work/
+venv/
