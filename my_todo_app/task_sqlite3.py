@@ -16,6 +16,7 @@ class SQLite3TaskDatabase(TaskDatabase):
     def __init__(self, path: str):
         super().__init__()
         db_exists = os.path.exists(path)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         self._conn: sqlite3.Connection = sqlite3.connect(path)
         self._cursor: Optional[sqlite3.Cursor] = None
         if not db_exists:
@@ -159,4 +160,3 @@ class SQLite3TaskDatabase(TaskDatabase):
             sort_key: float = row[2]
             task_lists.append(TaskList(id_, name, sort_key))
         return task_lists
-
