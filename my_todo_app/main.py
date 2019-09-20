@@ -4,8 +4,11 @@
 """The application entry point."""
 
 import os
+import uuid
+from datetime import datetime
 
 from my_todo_app.main_window import MainWindow
+from my_todo_app.task import TaskList, TaskDatabase, Task
 from my_todo_app.task_sqlite3 import SQLite3TaskDatabase
 
 
@@ -15,9 +18,21 @@ def get_db_path():
         return os.path.join(appdata, 'lpubsppop01', 'my_todo', 'db.sqlite3')
     return '~/.lpubsppop01/my_todo'
 
+
+def insert_sample_if_empty(db: TaskDatabase):
+    if db.get_task_lists():
+        return
+    db.upsert_task_list(TaskList('inbox', 'Inbox', 0))
+    db.upsert_task_list(TaskList('next_action', 'Next Action', 1))
+    db.upsert_task_list(TaskList('someday', 'Someday', 2))
+    timestamp = int(datetime.now().timestamp())
+    db.upsert_task(Task(str(uuid.uuid4()), 'inbox', 'Foo', 'sample', False, timestamp, timestamp, 0))
+
+
 def main():
     db_path = get_db_path()
     db = SQLite3TaskDatabase(db_path)
+    insert_sample_if_empty(db)
     window = MainWindow(db)
     window.show()
 
