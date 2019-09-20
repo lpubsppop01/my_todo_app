@@ -7,9 +7,9 @@ import os
 import uuid
 from datetime import datetime
 
-from my_todo_app.main_window import MainWindow
-from my_todo_app.task import TaskList, TaskDatabase, Task
-from my_todo_app.task_sqlite3 import SQLite3TaskDatabase
+from my_todo_app.app.main_window import MainWindow
+from my_todo_app.engine.task import TaskList, TaskDatabase, Task
+from my_todo_app.engine.task_sqlite3 import SQLite3TaskDatabase
 
 
 def get_db_path():

@@ -5,8 +5,8 @@ import os
 import uuid
 from unittest import TestCase
 
-from my_todo_app.task import TaskList, Task
-from my_todo_app.task_sqlite3 import SQLite3TaskDatabase
+from my_todo_app.engine.task import TaskList, Task
+from my_todo_app.engine.task_sqlite3 import SQLite3TaskDatabase
 
 
 class TestTaskDatabase(TestCase):

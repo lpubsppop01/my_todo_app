@@ -1,14 +1,16 @@
 #! /usr/bin/env python
 # -*- coding: utf-8-unix -*-
 
-"""The main window implementation."""
+"""The main window."""
 
 import tkinter as tk
-import tkinter.scrolledtext as tkst
+import tkinter.scrolledtext as tk_scrolledtext
+import uuid
 from tkinter import ttk
 from typing import *
 
-from my_todo_app.task import TaskDatabase, TaskList, Task
+from my_todo_app.app.task_list_dialog import TaskListDialog
+from my_todo_app.engine.task import TaskDatabase, TaskList, Task
 
 
 class MainWindow:
@@ -51,7 +53,7 @@ class MainWindow:
         left_top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E),
                             padx=(margin, margin_half), pady=(margin, margin_half))
 
-        add_task_list_button = ttk.Button(left_top_frame, text='Add', command=self._open_task_list_dialog)
+        add_task_list_button = ttk.Button(left_top_frame, text='Add', command=self._add_task_list_button_clicked)
         add_task_list_button.grid(row=0, column=0, sticky=tk.E)
 
         remove_task_list_button = ttk.Button(left_top_frame, text='Remove')
@@ -98,26 +100,19 @@ class MainWindow:
         self._name_entry.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
                               padx=(margin_half, margin), pady=(margin, margin_half))
 
-        self._memo_text = tkst.ScrolledText(right_frame, font=memo_font)
+        self._memo_text = tk_scrolledtext.ScrolledText(right_frame, font=memo_font)
         self._memo_text.grid(row=2, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
                              padx=(margin_half, margin), pady=(margin_half, margin))
 
-    def _open_task_list_dialog(self):
-        dialog = tk.Toplevel(self._root)
-        dialog.title('Add Task List')
-        dialog.geometry(self._get_dialog_geometry(400, 300))
-        dialog.focus_set()
-        dialog.transient(self._root)
-        dialog.grab_set()
-
-    def _get_dialog_geometry(self, width, height) -> str:
-        root_x = self._root.winfo_x()
-        root_y = self._root.winfo_y()
-        root_width = self._root.winfo_width()
-        root_height = self._root.winfo_height()
-        x = root_x + int(root_width / 2) - int(width / 2)
-        y = root_y + int(root_height / 2) - int(height / 2)
-        return '{}x{}+{}+{}'.format(width, height, x, y)
+    def _add_task_list_button_clicked(self):
+        dialog = TaskListDialog(self._root)
+        if dialog.show_dialog():
+            sort_key = 0.0
+            if self._shown_task_lists:
+                sort_key = max([task_list.sort_key for task_list in self._shown_task_lists])
+            new_task_list = TaskList(str(uuid.uuid4()), dialog.result_name, sort_key)
+            self._db.upsert_task_list(new_task_list)
+            self._update_task_list_listbox()
 
     def _task_list_listbox_selected(self, event):
         self._update_task_listbox()
