@@ -32,10 +32,12 @@ class MainWindow:
         margin = 4
         margin_half = 2
         button_width = 5
-        task_list_listbox_font = 'Sans 12 bold'
-        task_listbox_font = 'Sans 15 bold'
-        name_font = 'Sans 21 bold'
-        memo_font = 'Sans 15 bold'
+        task_list_listbox_font = 'Arial 12 bold'
+        task_treeview_fontname = 'Arial'
+        task_treeview_fontsize = 15
+        task_treeview_rowheight = 15 * 3
+        name_font = 'Arial 21 bold'
+        memo_font = 'Arial 15'
 
         self._root = tk.Tk()
         self._root.title('My Todo')
@@ -49,6 +51,10 @@ class MainWindow:
         # style = ttk.Style(self._root)
         # style.theme_use('classic')
         # style.configure('Test.TLabel', background='brown')
+
+        style = ttk.Style(self._root)
+        style.configure("Treeview", font=(task_treeview_fontname, task_treeview_fontsize))
+        style.configure('Treeview', rowheight=task_treeview_rowheight)
 
         left_frame = ttk.Frame(self._root)
         left_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W))
@@ -101,10 +107,11 @@ class MainWindow:
         down_task_button = ttk.Button(center_top_frame, text='Down', width=button_width)
         down_task_button.grid(row=0, column=2, sticky=tk.E)
 
-        self._task_listbox = tk.Listbox(center_frame, exportselection=False, width=18, font=task_listbox_font)
-        self._task_listbox.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
-                                padx=(margin_half, margin_half), pady=(margin_half, margin))
-        self._task_listbox.bind('<<ListboxSelect>>', self._task_listbox_selected)
+        self._task_treeview = ttk.Treeview(center_frame, show='tree')
+        self._task_treeview.column('#0', width=300)
+        self._task_treeview.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
+                                 padx=(margin_half, margin_half), pady=(margin_half, margin))
+        self._task_treeview.bind('<<TreeviewSelect>>', self._task_treeview_selected)
 
         right_frame = ttk.Frame(self._root)
         right_frame.grid(row=0, column=2, sticky=(tk.N, tk.S, tk.E, tk.W))
@@ -176,7 +183,7 @@ class MainWindow:
             sort_key = sort_key_max + 1
         self._last_selected_task = Task(id_, parent_id, '', '', False, timestamp, timestamp, sort_key)
         self._db.upsert_task(self._last_selected_task)
-        self._update_task_listbox()
+        self._update_task_treeview()
         self._task_name_entry.focus_set()
 
     def _move_task_button_clicked(self):
@@ -191,7 +198,7 @@ class MainWindow:
         if dialog.show_dialog():
             self._last_selected_task.parent_id = dialog.result_task_list.id
             self._db.upsert_task(self._last_selected_task)
-            self._update_task_listbox()
+            self._update_task_treeview()
 
     def _remove_task_button_clicked(self):
         if self._last_selected_task is None:
@@ -201,7 +208,7 @@ class MainWindow:
         message = 'Really remove {}?'.format(self._last_selected_task.name)
         if ttk_messagebox.askokcancel('Confirm', message):
             self._db.delete_task(self._last_selected_task.id)
-            self._update_task_listbox()
+            self._update_task_treeview()
 
     def _key_pressed(self, event) -> None:
         if event.widget == self._task_name_entry:
@@ -225,15 +232,15 @@ class MainWindow:
 
         self._last_selected_task.name = self._task_name_entry.get()
         self._db.upsert_task(self._last_selected_task)
-        self._update_task_listbox()
+        self._update_task_treeview()
 
     # noinspection PyUnusedLocal
     def _task_list_listbox_selected(self, event):
         self._last_selected_task = None
-        self._update_task_listbox()
+        self._update_task_treeview()
 
     # noinspection PyUnusedLocal
-    def _task_listbox_selected(self, event):
+    def _task_treeview_selected(self, event):
         self._update_task_controls()
 
     def _update_task_list_listbox(self):
@@ -250,24 +257,24 @@ class MainWindow:
         if self._shown_task_lists:
             index_to_select = min(index_to_select, len(self._shown_task_lists) - 1)
             self._task_list_listbox.selection_set(index_to_select)
-        self._update_task_listbox()
+        self._update_task_treeview()
 
-    def _update_task_listbox(self):
+    def _update_task_treeview(self):
         self._last_selected_task_list = self._get_selected_task_list()
-        self._task_listbox.delete(0, tk.END)
+        self._task_treeview.delete(*self._task_treeview.get_children())
         if self._last_selected_task_list:
             self._shown_tasks = self._db.get_tasks(parent_id=self._last_selected_task_list.id)
-            index = 0
-            index_to_select = 0
+            item_id_to_select: Optional[str] = None
+            item_id_to_select_is_fixed: bool = False
             for task in self._shown_tasks:
                 label = task.name if task.name else 'Empty'
-                self._task_listbox.insert(index, label)
-                if self._last_selected_task and self._last_selected_task.sort_key > task.sort_key:
-                    index_to_select += 1
-                index += 1
-            if self._shown_tasks:
-                index_to_select = min(index_to_select, len(self._shown_tasks) - 1)
-                self._task_listbox.selection_set(index_to_select)
+                item_id = self._task_treeview.insert('', tk.END, text=label, values=task.id)
+                if not item_id_to_select_is_fixed:
+                    item_id_to_select = item_id
+                    if not self._last_selected_task or self._last_selected_task.sort_key <= task.sort_key:
+                        item_id_to_select_is_fixed = True
+            if item_id_to_select:
+                self._task_treeview.selection_set(item_id_to_select)
         else:
             self._shown_tasks = []
         self._update_task_controls()
@@ -294,9 +301,10 @@ class MainWindow:
 
     def _get_selected_task(self) -> Optional[Task]:
         selected_task: Optional[Task] = None
-        selected_indices = self._task_listbox.curselection()
-        if selected_indices:
-            selected_task = self._shown_tasks[selected_indices[0]]
+        for item_id in self._task_treeview.selection():
+            item = self._task_treeview.item(item_id)
+            task_id = item['values'][0]
+            selected_task = [task for task in self._shown_tasks if task.id == task_id][0]
         return selected_task
 
     def show(self):
