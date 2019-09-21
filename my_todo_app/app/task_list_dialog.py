@@ -25,10 +25,12 @@ class TaskListDialog:
 
         self._dialog = tk.Toplevel(self._parent)
         self._dialog.title('Add Task List')
-        self._dialog.geometry(get_center_geometry(self._parent, 300, 80))
+        self._dialog.geometry(get_center_geometry(self._parent, 300, 70))
+        self._dialog.resizable(False, False)
         self._dialog.grid_rowconfigure(0, weight=1)
         self._dialog.grid_rowconfigure(1, weight=0)
         self._dialog.grid_columnconfigure(0, weight=1)
+        self._dialog.bind('<Any-KeyPress>', self._key_pressed)
 
         top_frame = ttk.Frame(self._dialog)
         top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
@@ -42,9 +44,10 @@ class TaskListDialog:
 
         self._name_entry = ttk.Entry(top_frame)
         self._name_entry.grid(row=0, column=1, sticky=(tk.N, tk.E, tk.W))
+        self._name_entry.focus_set()
 
         bottom_frame = ttk.Frame(self._dialog)
-        bottom_frame.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
+        bottom_frame.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E),
                           padx=(margin, margin), pady=(margin_half, margin))
         bottom_frame.grid_rowconfigure(0, weight=1)
         bottom_frame.grid_columnconfigure(0, weight=1)
@@ -52,13 +55,31 @@ class TaskListDialog:
         ok_button = ttk.Button(bottom_frame, text='OK', command=self._ok_button_clicked)
         ok_button.grid(row=0, column=0, sticky=tk.E)
 
-    def _ok_button_clicked(self):
+        cancel_button = ttk.Button(bottom_frame, text='Cancel', command=self._cancel_button_clicked)
+        cancel_button.grid(row=0, column=1, sticky=tk.E)
+
+    def _key_pressed(self, event) -> None:
+        if event.keysym == 'Return':
+            self._on_ok()
+        elif event.keysym == 'Escape':
+            self._on_cancel()
+
+    def _ok_button_clicked(self) -> None:
+        self._on_ok()
+
+    def _on_ok(self) -> None:
         self.result_name = self._name_entry.get()
         if self.result_name:
             self._ok = True
             self._dialog.destroy()
         else:
             ttk_messagebox.showerror('Error', 'Name is required.')
+
+    def _cancel_button_clicked(self) -> None:
+        self._on_cancel()
+
+    def _on_cancel(self) -> None:
+        self._dialog.destroy()
 
     def show_dialog(self) -> bool:
         show_dialog(self._dialog, self._parent)
