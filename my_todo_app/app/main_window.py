@@ -31,9 +31,11 @@ class MainWindow:
     def _layout(self):
         margin = 4
         margin_half = 2
-        list_font = 'Sans 21 bold'
+        button_width = 5
+        task_list_listbox_font = 'Sans 12 bold'
+        task_listbox_font = 'Sans 15 bold'
         name_font = 'Sans 21 bold'
-        memo_font = 'Sans 12 bold'
+        memo_font = 'Sans 15 bold'
 
         self._root = tk.Tk()
         self._root.title('My Todo')
@@ -57,19 +59,25 @@ class MainWindow:
         left_top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E),
                             padx=(margin, margin_half), pady=(margin, margin_half))
 
-        add_task_list_button = ttk.Button(left_top_frame, text='Add',
+        add_task_list_button = ttk.Button(left_top_frame, text='Add', width=button_width,
                                           command=self._add_task_list_button_clicked)
         add_task_list_button.grid(row=0, column=0, sticky=tk.E)
 
-        remove_task_list_button = ttk.Button(left_top_frame, text='Edit',
+        up_task_list_button = ttk.Button(left_top_frame, text='Up', width=button_width)
+        up_task_list_button.grid(row=0, column=1, sticky=tk.E)
+
+        down_task_list_button = ttk.Button(left_top_frame, text='Down', width=button_width)
+        down_task_list_button.grid(row=0, column=2, sticky=tk.E)
+
+        remove_task_list_button = ttk.Button(left_top_frame, text='Edit', width=button_width,
                                              command=self._edit_task_list_button_clicked)
-        remove_task_list_button.grid(row=0, column=1, sticky=tk.E)
+        remove_task_list_button.grid(row=0, column=3, sticky=tk.E)
 
-        remove_task_list_button = ttk.Button(left_top_frame, text='Remove',
+        remove_task_list_button = ttk.Button(left_top_frame, text='Remove', width=button_width,
                                              command=self._remove_task_list_button_clicked)
-        remove_task_list_button.grid(row=0, column=2, sticky=tk.E)
+        remove_task_list_button.grid(row=0, column=4, sticky=tk.E)
 
-        self._task_list_listbox = tk.Listbox(left_frame, exportselection=False, width=15, font=list_font)
+        self._task_list_listbox = tk.Listbox(left_frame, exportselection=False, width=15, font=task_list_listbox_font)
         self._task_list_listbox.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
                                      padx=(margin, margin_half), pady=(margin_half, margin))
         self._task_list_listbox.bind('<<ListboxSelect>>', self._task_list_listbox_selected)
@@ -83,17 +91,17 @@ class MainWindow:
         center_top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E),
                               padx=(margin_half, margin_half), pady=(margin, margin_half))
 
-        add_task_button = ttk.Button(center_top_frame, text='Add',
+        add_task_button = ttk.Button(center_top_frame, text='Add', width=button_width,
                                      command=self._add_task_button_clicked)
         add_task_button.grid(row=0, column=0, sticky=tk.E)
 
-        add_task_button = ttk.Button(center_top_frame, text='Up')
-        add_task_button.grid(row=0, column=1, sticky=tk.E)
+        up_task_button = ttk.Button(center_top_frame, text='Up', width=button_width)
+        up_task_button.grid(row=0, column=1, sticky=tk.E)
 
-        add_task_button = ttk.Button(center_top_frame, text='Down')
-        add_task_button.grid(row=0, column=2, sticky=tk.E)
+        down_task_button = ttk.Button(center_top_frame, text='Down', width=button_width)
+        down_task_button.grid(row=0, column=2, sticky=tk.E)
 
-        self._task_listbox = tk.Listbox(center_frame, exportselection=False, width=18, font=list_font)
+        self._task_listbox = tk.Listbox(center_frame, exportselection=False, width=18, font=task_listbox_font)
         self._task_listbox.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
                                 padx=(margin_half, margin_half), pady=(margin_half, margin))
         self._task_listbox.bind('<<ListboxSelect>>', self._task_listbox_selected)
@@ -107,11 +115,11 @@ class MainWindow:
         right_top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E),
                              padx=(margin_half, margin), pady=(margin, margin_half))
 
-        move_task_button = ttk.Button(right_top_frame, text='Move',
+        move_task_button = ttk.Button(right_top_frame, text='Move', width=button_width,
                                       command=self._move_task_button_clicked)
         move_task_button.grid(row=0, column=0, sticky=tk.E)
 
-        remove_task_button = ttk.Button(right_top_frame, text='Remove',
+        remove_task_button = ttk.Button(right_top_frame, text='Remove', width=button_width,
                                         command=self._remove_task_button_clicked)
         remove_task_button.grid(row=0, column=1, sticky=tk.E)
 
