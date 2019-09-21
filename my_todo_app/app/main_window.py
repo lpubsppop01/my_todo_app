@@ -31,7 +31,7 @@ class MainWindow:
     def _layout(self):
         margin = 4
         margin_half = 2
-        button_width = 5
+        button_width = 9
         name_font = 'Arial 21 bold'
         memo_font = 'Arial 15'
 
@@ -57,7 +57,7 @@ class MainWindow:
         left_frame.grid_columnconfigure(0, weight=1)
 
         left_top_frame = ttk.Frame(left_frame)
-        left_top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E),
+        left_top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.W),
                             padx=(margin, margin_half), pady=(margin, margin_half))
 
         add_tasklist_button = ttk.Button(left_top_frame, text='Add', width=button_width,
@@ -65,23 +65,23 @@ class MainWindow:
         add_tasklist_button.grid(row=0, column=0, sticky=tk.E)
 
         up_tasklist_button = ttk.Button(left_top_frame, text='Up', width=button_width)
-        up_tasklist_button.grid(row=0, column=1, sticky=tk.E)
+        up_tasklist_button.grid(row=1, column=0, sticky=tk.E)
 
         down_tasklist_button = ttk.Button(left_top_frame, text='Down', width=button_width)
-        down_tasklist_button.grid(row=0, column=2, sticky=tk.E)
+        down_tasklist_button.grid(row=1, column=1, sticky=tk.E)
 
         remove_tasklist_button = ttk.Button(left_top_frame, text='Edit', width=button_width,
                                             command=self._edit_tasklist_button_clicked)
-        remove_tasklist_button.grid(row=0, column=3, sticky=tk.E)
+        remove_tasklist_button.grid(row=0, column=1, sticky=tk.E)
 
         remove_tasklist_button = ttk.Button(left_top_frame, text='Remove', width=button_width,
                                             command=self._remove_tasklist_button_clicked)
-        remove_tasklist_button.grid(row=0, column=4, sticky=tk.E)
+        remove_tasklist_button.grid(row=0, column=2, sticky=tk.E)
 
         self._tasklist_treeview = ttk.Treeview(left_frame, show='tree', style='tasklist_treeview.Treeview')
         self._tasklist_treeview.column('#0', width=200)
         self._tasklist_treeview.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
-                                     padx=(margin_half, margin_half), pady=(margin_half, margin))
+                                     padx=(margin, margin_half), pady=(margin_half, margin))
         self._tasklist_treeview.bind('<<TreeviewSelect>>', self._tasklist_treeview_selected)
 
         center_frame = ttk.Frame(self._root)
@@ -90,18 +90,29 @@ class MainWindow:
         center_frame.grid_columnconfigure(0, weight=1)
 
         center_top_frame = ttk.Frame(center_frame)
-        center_top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E),
+        center_top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.W),
                               padx=(margin_half, margin_half), pady=(margin, margin_half))
 
         add_task_button = ttk.Button(center_top_frame, text='Add', width=button_width,
                                      command=self._add_task_button_clicked)
         add_task_button.grid(row=0, column=0, sticky=tk.E)
 
+        remove_task_button = ttk.Button(center_top_frame, text='Remove', width=button_width,
+                                        command=self._remove_task_button_clicked)
+        remove_task_button.grid(row=0, column=1, sticky=tk.E)
+
         up_task_button = ttk.Button(center_top_frame, text='Up', width=button_width)
-        up_task_button.grid(row=0, column=1, sticky=tk.E)
+        up_task_button.grid(row=0, column=2, sticky=tk.E)
 
         down_task_button = ttk.Button(center_top_frame, text='Down', width=button_width)
-        down_task_button.grid(row=0, column=2, sticky=tk.E)
+        down_task_button.grid(row=0, column=3, sticky=tk.E)
+
+        move_task_button = ttk.Button(center_top_frame, text='Complete', width=button_width)
+        move_task_button.grid(row=1, column=0, sticky=tk.E)
+
+        move_task_button = ttk.Button(center_top_frame, text='Move', width=button_width,
+                                      command=self._move_task_button_clicked)
+        move_task_button.grid(row=1, column=1, sticky=tk.E)
 
         self._task_treeview = ttk.Treeview(center_frame, show='tree', style='task_treeview.Treeview')
         self._task_treeview.column('#0', width=300)
@@ -115,16 +126,14 @@ class MainWindow:
         right_frame.grid_columnconfigure(0, weight=1)
 
         right_top_frame = ttk.Frame(right_frame)
-        right_top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E),
+        right_top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.W),
                              padx=(margin_half, margin), pady=(margin, margin_half))
 
-        move_task_button = ttk.Button(right_top_frame, text='Move', width=button_width,
-                                      command=self._move_task_button_clicked)
-        move_task_button.grid(row=0, column=0, sticky=tk.E)
+        zoom_up_button = ttk.Button(right_top_frame, text='Zoom In', width=button_width)
+        zoom_up_button.grid(row=0, column=0, sticky=tk.E)
 
-        remove_task_button = ttk.Button(right_top_frame, text='Remove', width=button_width,
-                                        command=self._remove_task_button_clicked)
-        remove_task_button.grid(row=0, column=1, sticky=tk.E)
+        zoom_out_button = ttk.Button(right_top_frame, text='Zoom Out', width=button_width)
+        zoom_out_button.grid(row=0, column=1, sticky=tk.E)
 
         self._task_name_entry = ttk.Entry(right_frame, font=name_font)
         self._task_name_entry.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),

@@ -43,8 +43,7 @@ class MoveTaskDialog:
         top_frame.grid_columnconfigure(1, weight=0)
 
         self._tasklist_listbox = tk.Listbox(top_frame, exportselection=False, width=15)
-        self._tasklist_listbox.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
-                                    padx=(margin, margin_half), pady=(margin_half, margin))
+        self._tasklist_listbox.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W))
         index = 0
         for tasklist in self._tasklists:
             label = tasklist.name if tasklist.name else 'Empty'
