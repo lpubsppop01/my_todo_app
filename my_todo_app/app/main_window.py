@@ -4,8 +4,8 @@
 """The main window."""
 
 import tkinter as tk
+import tkinter.messagebox as ttk_messagebox
 import tkinter.scrolledtext as tk_scrolledtext
-import uuid
 from tkinter import ttk
 from typing import *
 
@@ -53,13 +53,19 @@ class MainWindow:
         left_top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E),
                             padx=(margin, margin_half), pady=(margin, margin_half))
 
-        add_task_list_button = ttk.Button(left_top_frame, text='Add', command=self._add_task_list_button_clicked)
+        add_task_list_button = ttk.Button(left_top_frame, text='Add',
+                                          command=self._add_task_list_button_clicked)
         add_task_list_button.grid(row=0, column=0, sticky=tk.E)
 
-        remove_task_list_button = ttk.Button(left_top_frame, text='Remove')
+        remove_task_list_button = ttk.Button(left_top_frame, text='Edit',
+                                             command=self._edit_task_list_button_clicked)
         remove_task_list_button.grid(row=0, column=1, sticky=tk.E)
 
-        self._task_list_listbox = tk.Listbox(left_frame, exportselection=False, width=12, font=list_font)
+        remove_task_list_button = ttk.Button(left_top_frame, text='Remove',
+                                             command=self._remove_task_list_button_clicked)
+        remove_task_list_button.grid(row=0, column=2, sticky=tk.E)
+
+        self._task_list_listbox = tk.Listbox(left_frame, exportselection=False, width=15, font=list_font)
         self._task_list_listbox.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
                                      padx=(margin, margin_half), pady=(margin_half, margin))
         self._task_list_listbox.bind('<<ListboxSelect>>', self._task_list_listbox_selected)
@@ -76,8 +82,11 @@ class MainWindow:
         add_task_button = ttk.Button(center_top_frame, text='Add')
         add_task_button.grid(row=0, column=0, sticky=tk.E)
 
-        remove_task_button = ttk.Button(center_top_frame, text='Remove')
-        remove_task_button.grid(row=0, column=1, sticky=tk.E)
+        add_task_button = ttk.Button(center_top_frame, text='Up')
+        add_task_button.grid(row=0, column=1, sticky=tk.E)
+
+        add_task_button = ttk.Button(center_top_frame, text='Down')
+        add_task_button.grid(row=0, column=2, sticky=tk.E)
 
         self._task_listbox = tk.Listbox(center_frame, exportselection=False, width=18, font=list_font)
         self._task_listbox.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
@@ -96,6 +105,9 @@ class MainWindow:
         move_task_button = ttk.Button(right_top_frame, text='Move')
         move_task_button.grid(row=0, column=0, sticky=tk.E)
 
+        remove_task_button = ttk.Button(right_top_frame, text='Remove')
+        remove_task_button.grid(row=0, column=1, sticky=tk.E)
+
         self._name_entry = ttk.Entry(right_frame, font=name_font)
         self._name_entry.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
                               padx=(margin_half, margin), pady=(margin, margin_half))
@@ -107,32 +119,53 @@ class MainWindow:
     def _add_task_list_button_clicked(self):
         dialog = TaskListDialog(self._root)
         if dialog.show_dialog():
-            sort_key = 0.0
             if self._shown_task_lists:
-                sort_key = max([task_list.sort_key for task_list in self._shown_task_lists])
-            new_task_list = TaskList(str(uuid.uuid4()), dialog.result_name, sort_key)
-            self._db.upsert_task_list(new_task_list)
+                sort_key_max = max([task_list.sort_key for task_list in self._shown_task_lists])
+                dialog.result_task_list.sort_key = sort_key_max + 1
+            self._db.upsert_task_list(dialog.result_task_list)
             self._update_task_list_listbox()
 
+    def _edit_task_list_button_clicked(self):
+        if self._last_selected_task_list is None:
+            ttk_messagebox.showerror('Error', 'Task list is not selected.')
+            return
+
+        dialog = TaskListDialog(self._root, self._last_selected_task_list)
+        if dialog.show_dialog():
+            self._last_selected_task_list = dialog.result_task_list
+            self._db.upsert_task_list(dialog.result_task_list)
+            self._update_task_list_listbox()
+
+    def _remove_task_list_button_clicked(self):
+        if self._last_selected_task_list is None:
+            ttk_messagebox.showerror('Error', 'Task list is not selected.')
+            return
+
+        message = 'Really remove {}?'.format(self._last_selected_task_list.name)
+        if ttk_messagebox.askokcancel('Confirm', message):
+            self._db.delete_task_list(self._last_selected_task_list.id)
+            self._update_task_list_listbox()
+
+    # noinspection PyUnusedLocal
     def _task_list_listbox_selected(self, event):
         self._update_task_listbox()
 
+    # noinspection PyUnusedLocal
     def _task_listbox_selected(self, event):
         self._update_task_controls()
 
     def _update_task_list_listbox(self):
-        task_lists = self._db.get_task_lists()
-        if set(task_lists) == set(self._shown_task_lists):
-            return
-
-        self._shown_task_lists = task_lists
+        self._shown_task_lists = self._db.get_task_lists()
         self._task_list_listbox.delete(0, tk.END)
         index = 0
+        index_to_select = 0
         for task_list in self._shown_task_lists:
             self._task_list_listbox.insert(index, task_list.name)
+            if self._last_selected_task_list and self._last_selected_task_list.id == task_list.id:
+                index_to_select = index
             index += 1
         if self._shown_task_lists:
-            self._task_list_listbox.selection_set(0)
+            self._task_list_listbox.selection_set(index_to_select)
         self._update_task_listbox()
 
     def _update_task_listbox(self):
@@ -144,14 +177,17 @@ class MainWindow:
             return
 
         self._shown_tasks = self._db.get_tasks(parent_id=selected_task_list.id)
-        self._last_selected_task = selected_task_list
+        self._last_selected_task_list = selected_task_list
         self._task_listbox.delete(0, tk.END)
         index = 0
+        index_to_select = 0
         for task in self._shown_tasks:
             self._task_listbox.insert(index, task.name)
+            if self._last_selected_task and self._last_selected_task.id == task.id:
+                index_to_select = index
             index += 1
         if self._shown_tasks:
-            self._task_listbox.selection_set(0)
+            self._task_listbox.selection_set(index_to_select)
         self._update_task_controls()
 
     def _update_task_controls(self):

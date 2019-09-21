@@ -2,19 +2,26 @@
 # -*- coding: utf-8-unix -*-
 
 """The task list dialog."""
-
+import copy
 import tkinter as tk
+import uuid
 from tkinter import ttk
-from tkinter import messagebox as ttk_messagebox
+import tkinter.messagebox as ttk_messagebox
+from typing import *
 
 from my_todo_app.app.window_utility import show_dialog, get_center_geometry
+from my_todo_app.engine.task import TaskList
 
 
 class TaskListDialog:
     """A task list dialog."""
 
-    def __init__(self, parent: tk.Tk) -> None:
+    def __init__(self, parent: tk.Tk, item_to_edit: Optional[TaskList] = None) -> None:
         self._parent: tk.Tk = parent
+        if item_to_edit is not None:
+            self.result_task_list: TaskList = copy.deepcopy(item_to_edit)
+        else:
+            self.result_task_list: TaskList = TaskList(str(uuid.uuid4()), '', 0)
         self._ok: bool = False
         self._layout()
 
@@ -44,6 +51,7 @@ class TaskListDialog:
 
         self._name_entry = ttk.Entry(top_frame)
         self._name_entry.grid(row=0, column=1, sticky=(tk.N, tk.E, tk.W))
+        self._name_entry.insert(0, self.result_task_list.name)
         self._name_entry.focus_set()
 
         bottom_frame = ttk.Frame(self._dialog)
@@ -68,8 +76,8 @@ class TaskListDialog:
         self._on_ok()
 
     def _on_ok(self) -> None:
-        self.result_name = self._name_entry.get()
-        if self.result_name:
+        self.result_task_list.name = self._name_entry.get()
+        if self.result_task_list.name:
             self._ok = True
             self._dialog.destroy()
         else:
