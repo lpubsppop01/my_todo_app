@@ -51,7 +51,7 @@ class SQLite3TaskDatabase(TaskDatabase):
             )''')
         cursor.execute('create index task_done_index on tasks(done)')
         cursor.execute('''
-            create table if not exists task_lists (
+            create table if not exists tasklists (
                 id text primary key not null,
                 name text,
                 sort_key float
@@ -76,17 +76,17 @@ class SQLite3TaskDatabase(TaskDatabase):
         if not self._cursor:
             self._conn.commit()
 
-    def upsert_task_list(self, task_list: TaskList) -> None:
+    def upsert_tasklist(self, tasklist: TaskList) -> None:
         if self._cursor:
             cursor = self._cursor
         else:
             cursor = self._conn.cursor()
 
         upsert_sql = '''
-            insert or replace into task_lists (id, name, sort_key)
+            insert or replace into tasklists (id, name, sort_key)
             values (?, ?, ?);
         '''
-        cursor.execute(upsert_sql, [task_list.id, task_list.name, task_list.sort_key])
+        cursor.execute(upsert_sql, [tasklist.id, tasklist.name, tasklist.sort_key])
 
         if not self._cursor:
             self._conn.commit()
@@ -103,13 +103,13 @@ class SQLite3TaskDatabase(TaskDatabase):
         if not self._cursor:
             self._conn.commit()
 
-    def delete_task_list(self, id_: str) -> None:
+    def delete_tasklist(self, id_: str) -> None:
         if self._cursor:
             cursor = self._cursor
         else:
             cursor = self._conn.cursor()
 
-        delete_sql = 'delete from task_lists where id = ?'
+        delete_sql = 'delete from tasklists where id = ?'
         cursor.execute(delete_sql, [id_])
 
         if not self._cursor:
@@ -145,18 +145,18 @@ class SQLite3TaskDatabase(TaskDatabase):
             tasks.append(Task(id_, parent_id, name, tags, done, created_at, updated_at, sort_key))
         return tasks
 
-    def get_task_lists(self, id_: Optional[str] = None) -> List[TaskList]:
-        select_sql = 'select * from task_lists'
+    def get_tasklists(self, id_: Optional[str] = None) -> List[TaskList]:
+        select_sql = 'select * from tasklists'
         select_params = []
         if id_ is not None:
             select_sql += ' and' if select_params else ' where'
             select_sql += ' id = ?'
             select_params.append(id_)
         select_sql += ' order by sort_key'
-        task_lists = []
+        tasklists = []
         for row in self._conn.execute(select_sql, select_params):
             id_: str = row[0]
             name: str = row[1]
             sort_key: float = row[2]
-            task_lists.append(TaskList(id_, name, sort_key))
-        return task_lists
+            tasklists.append(TaskList(id_, name, sort_key))
+        return tasklists

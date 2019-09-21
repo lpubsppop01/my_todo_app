@@ -20,11 +20,11 @@ def get_db_path():
 
 
 def insert_sample_if_empty(db: TaskDatabase):
-    if db.get_task_lists():
+    if db.get_tasklists():
         return
-    db.upsert_task_list(TaskList('inbox', 'Inbox', 0))
-    db.upsert_task_list(TaskList('next_action', 'Next Action', 1))
-    db.upsert_task_list(TaskList('someday', 'Someday', 2))
+    db.upsert_tasklist(TaskList('inbox', 'Inbox', 0))
+    db.upsert_tasklist(TaskList('next_action', 'Next Action', 1))
+    db.upsert_tasklist(TaskList('someday', 'Someday', 2))
     timestamp = int(datetime.now().timestamp())
     db.upsert_task(Task(str(uuid.uuid4()), 'inbox', 'Foo', 'sample', False, timestamp, timestamp, 0))
 

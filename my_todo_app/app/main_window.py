@@ -11,8 +11,8 @@ from datetime import datetime
 from tkinter import ttk
 from typing import *
 
-from my_todo_app.app.move_task_dialog import MoveTaskDialog
-from my_todo_app.app.add_or_edit_task_list_dialog import AddOrEditTaskListDialog
+from my_todo_app.app.movetask_dialog import MoveTaskDialog
+from my_todo_app.app.tasklist_dialog import AddOrEditTaskListDialog
 from my_todo_app.engine.task import TaskDatabase, TaskList, Task
 
 
@@ -21,21 +21,17 @@ class MainWindow:
 
     def __init__(self, db: TaskDatabase):
         self._db: TaskDatabase = db
-        self._shown_task_lists: List[TaskList] = []
+        self._shown_tasklists: List[TaskList] = []
         self._shown_tasks: List[Task] = []
-        self._last_selected_task_list: Optional[TaskList] = None
+        self._last_selected_tasklist: Optional[TaskList] = None
         self._last_selected_task: Optional[Task] = None
         self._layout()
-        self._update_task_list_treeview()
+        self._update_tasklist_treeview()
 
     def _layout(self):
         margin = 4
         margin_half = 2
         button_width = 5
-        task_list_listbox_font = 'Arial 12 bold'
-        task_treeview_fontname = 'Arial'
-        task_treeview_fontsize = 15
-        task_treeview_rowheight = 15 * 3
         name_font = 'Arial 21 bold'
         memo_font = 'Arial 15'
 
@@ -48,15 +44,12 @@ class MainWindow:
         self._root.grid_columnconfigure(2, weight=1)
         self._root.bind('<Any-KeyPress>', self._key_pressed)
 
-        # style = ttk.Style(self._root)
-        # style.theme_use('classic')
-        # style.configure('Test.TLabel', background='brown')
-
         style = ttk.Style(self._root)
-        style.configure("task_treeview.Treeview", font=(task_treeview_fontname, task_treeview_fontsize))
-        style.configure('task_treeview.Treeview', rowheight=task_treeview_rowheight)
-        style.configure("task_list_treeview.Treeview", font=('Arial', 12))
-        style.configure('task_list_treeview.Treeview', rowheight=12 * 3)
+        # style.theme_use('classic')
+        style.configure("tasklist_treeview.Treeview", font=('Arial', 12))
+        style.configure('tasklist_treeview.Treeview', rowheight=12 * 3)
+        style.configure("task_treeview.Treeview", font=('Arial', 15))
+        style.configure('task_treeview.Treeview', rowheight=15 * 3)
 
         left_frame = ttk.Frame(self._root)
         left_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W))
@@ -67,29 +60,29 @@ class MainWindow:
         left_top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E),
                             padx=(margin, margin_half), pady=(margin, margin_half))
 
-        add_task_list_button = ttk.Button(left_top_frame, text='Add', width=button_width,
-                                          command=self._add_task_list_button_clicked)
-        add_task_list_button.grid(row=0, column=0, sticky=tk.E)
+        add_tasklist_button = ttk.Button(left_top_frame, text='Add', width=button_width,
+                                         command=self._add_tasklist_button_clicked)
+        add_tasklist_button.grid(row=0, column=0, sticky=tk.E)
 
-        up_task_list_button = ttk.Button(left_top_frame, text='Up', width=button_width)
-        up_task_list_button.grid(row=0, column=1, sticky=tk.E)
+        up_tasklist_button = ttk.Button(left_top_frame, text='Up', width=button_width)
+        up_tasklist_button.grid(row=0, column=1, sticky=tk.E)
 
-        down_task_list_button = ttk.Button(left_top_frame, text='Down', width=button_width)
-        down_task_list_button.grid(row=0, column=2, sticky=tk.E)
+        down_tasklist_button = ttk.Button(left_top_frame, text='Down', width=button_width)
+        down_tasklist_button.grid(row=0, column=2, sticky=tk.E)
 
-        remove_task_list_button = ttk.Button(left_top_frame, text='Edit', width=button_width,
-                                             command=self._edit_task_list_button_clicked)
-        remove_task_list_button.grid(row=0, column=3, sticky=tk.E)
+        remove_tasklist_button = ttk.Button(left_top_frame, text='Edit', width=button_width,
+                                            command=self._edit_tasklist_button_clicked)
+        remove_tasklist_button.grid(row=0, column=3, sticky=tk.E)
 
-        remove_task_list_button = ttk.Button(left_top_frame, text='Remove', width=button_width,
-                                             command=self._remove_task_list_button_clicked)
-        remove_task_list_button.grid(row=0, column=4, sticky=tk.E)
+        remove_tasklist_button = ttk.Button(left_top_frame, text='Remove', width=button_width,
+                                            command=self._remove_tasklist_button_clicked)
+        remove_tasklist_button.grid(row=0, column=4, sticky=tk.E)
 
-        self._task_list_treeview = ttk.Treeview(left_frame, show='tree', style='task_list_treeview.Treeview')
-        self._task_list_treeview.column('#0', width=200)
-        self._task_list_treeview.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
-                                      padx=(margin_half, margin_half), pady=(margin_half, margin))
-        self._task_list_treeview.bind('<<TreeviewSelect>>', self._task_list_treeview_selected)
+        self._tasklist_treeview = ttk.Treeview(left_frame, show='tree', style='tasklist_treeview.Treeview')
+        self._tasklist_treeview.column('#0', width=200)
+        self._tasklist_treeview.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
+                                     padx=(margin_half, margin_half), pady=(margin_half, margin))
+        self._tasklist_treeview.bind('<<TreeviewSelect>>', self._tasklist_treeview_selected)
 
         center_frame = ttk.Frame(self._root)
         center_frame.grid(row=0, column=1, sticky=(tk.N, tk.S, tk.E, tk.W))
@@ -142,43 +135,43 @@ class MainWindow:
         self._task_memo_text.grid(row=2, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
                                   padx=(margin_half, margin), pady=(margin_half, margin))
 
-    def _add_task_list_button_clicked(self):
+    def _add_tasklist_button_clicked(self):
         dialog = AddOrEditTaskListDialog(self._root)
         if dialog.show_dialog():
-            if self._shown_task_lists:
-                sort_key_max = max([task_list.sort_key for task_list in self._shown_task_lists])
-                dialog.result_task_list.sort_key = sort_key_max + 1
-            self._db.upsert_task_list(dialog.result_task_list)
-            self._update_task_list_treeview()
+            if self._shown_tasklists:
+                sort_key_max = max([tasklist.sort_key for tasklist in self._shown_tasklists])
+                dialog.result_tasklist.sort_key = sort_key_max + 1
+            self._db.upsert_tasklist(dialog.result_tasklist)
+            self._update_tasklist_treeview()
 
-    def _edit_task_list_button_clicked(self):
-        if self._last_selected_task_list is None:
+    def _edit_tasklist_button_clicked(self):
+        if self._last_selected_tasklist is None:
             ttk_messagebox.showerror('Error', 'No task list is selected.')
             return
 
-        dialog = AddOrEditTaskListDialog(self._root, self._last_selected_task_list)
+        dialog = AddOrEditTaskListDialog(self._root, self._last_selected_tasklist)
         if dialog.show_dialog():
-            self._last_selected_task_list = dialog.result_task_list
-            self._db.upsert_task_list(dialog.result_task_list)
-            self._update_task_list_treeview()
+            self._last_selected_tasklist = dialog.result_tasklist
+            self._db.upsert_tasklist(dialog.result_tasklist)
+            self._update_tasklist_treeview()
 
-    def _remove_task_list_button_clicked(self):
-        if self._last_selected_task_list is None:
+    def _remove_tasklist_button_clicked(self):
+        if self._last_selected_tasklist is None:
             ttk_messagebox.showerror('Error', 'No task list is selected.')
             return
 
-        message = 'Really remove {}?'.format(self._last_selected_task_list.name)
+        message = 'Really remove {}?'.format(self._last_selected_tasklist.name)
         if ttk_messagebox.askokcancel('Confirm', message):
-            self._db.delete_task_list(self._last_selected_task_list.id)
-            self._update_task_list_treeview()
+            self._db.delete_tasklist(self._last_selected_tasklist.id)
+            self._update_tasklist_treeview()
 
     def _add_task_button_clicked(self):
-        if self._last_selected_task_list is None:
+        if self._last_selected_tasklist is None:
             ttk_messagebox.showerror('Error', 'No task list is selected.')
             return
 
         id_ = str(uuid.uuid4())
-        parent_id = self._last_selected_task_list.id
+        parent_id = self._last_selected_tasklist.id
         timestamp = int(datetime.now().timestamp())
         sort_key = 0.0
         if self._shown_tasks:
@@ -194,12 +187,12 @@ class MainWindow:
             ttk_messagebox.showerror('Error', 'No task is selected.')
             return
 
-        candidate_task_lists = [task_list for task_list in self._shown_task_lists
-                                if task_list.id != self._last_selected_task.parent_id]
+        candidate_tasklists = [tasklist for tasklist in self._shown_tasklists
+                               if tasklist.id != self._last_selected_task.parent_id]
 
-        dialog = MoveTaskDialog(self._root, candidate_task_lists)
+        dialog = MoveTaskDialog(self._root, candidate_tasklists)
         if dialog.show_dialog():
-            self._last_selected_task.parent_id = dialog.result_task_list.id
+            self._last_selected_task.parent_id = dialog.result_tasklist.id
             self._db.upsert_task(self._last_selected_task)
             self._update_task_treeview()
 
@@ -238,7 +231,7 @@ class MainWindow:
         self._update_task_treeview()
 
     # noinspection PyUnusedLocal
-    def _task_list_treeview_selected(self, event):
+    def _tasklist_treeview_selected(self, event):
         self._last_selected_task = None
         self._update_task_treeview()
 
@@ -246,27 +239,27 @@ class MainWindow:
     def _task_treeview_selected(self, event):
         self._update_task_controls()
 
-    def _update_task_list_treeview(self):
-        self._shown_task_lists = self._db.get_task_lists()
-        self._task_list_treeview.delete(*self._task_list_treeview.get_children())
+    def _update_tasklist_treeview(self):
+        self._shown_tasklists = self._db.get_tasklists()
+        self._tasklist_treeview.delete(*self._tasklist_treeview.get_children())
         item_id_to_select: Optional[str] = None
         item_id_to_select_is_fixed: bool = False
-        for task_list in self._shown_task_lists:
-            label = task_list.name if task_list.name else 'Empty'
-            item_id = self._task_list_treeview.insert('', tk.END, text=label, values=task_list.id)
+        for tasklist in self._shown_tasklists:
+            label = tasklist.name if tasklist.name else 'Empty'
+            item_id = self._tasklist_treeview.insert('', tk.END, text=label, values=tasklist.id)
             if not item_id_to_select_is_fixed:
                 item_id_to_select = item_id
-                if not self._last_selected_task_list or self._last_selected_task_list.sort_key <= task_list.sort_key:
+                if not self._last_selected_tasklist or self._last_selected_tasklist.sort_key <= tasklist.sort_key:
                     item_id_to_select_is_fixed = True
         if item_id_to_select:
-            self._task_list_treeview.selection_set(item_id_to_select)
+            self._tasklist_treeview.selection_set(item_id_to_select)
         self._update_task_treeview()
 
     def _update_task_treeview(self):
-        self._last_selected_task_list = self._get_selected_task_list()
+        self._last_selected_tasklist = self._get_selected_tasklist()
         self._task_treeview.delete(*self._task_treeview.get_children())
-        if self._last_selected_task_list:
-            self._shown_tasks = self._db.get_tasks(parent_id=self._last_selected_task_list.id)
+        if self._last_selected_tasklist:
+            self._shown_tasks = self._db.get_tasks(parent_id=self._last_selected_tasklist.id)
             item_id_to_select: Optional[str] = None
             item_id_to_select_is_fixed: bool = False
             for task in self._shown_tasks:
@@ -282,13 +275,13 @@ class MainWindow:
             self._shown_tasks = []
         self._update_task_controls()
 
-    def _get_selected_task_list(self) -> Optional[TaskList]:
-        selected_task_list: Optional[TaskList] = None
-        for item_id in self._task_list_treeview.selection():
-            item = self._task_list_treeview.item(item_id)
+    def _get_selected_tasklist(self) -> Optional[TaskList]:
+        selected_tasklist: Optional[TaskList] = None
+        for item_id in self._tasklist_treeview.selection():
+            item = self._tasklist_treeview.item(item_id)
             task_id = item['values'][0]
-            selected_task_list = [t for t in self._shown_task_lists if t.id == task_id][0]
-        return selected_task_list
+            selected_tasklist = [t for t in self._shown_tasklists if t.id == task_id][0]
+        return selected_tasklist
 
     def _update_task_controls(self) -> None:
         self._last_selected_task = self._get_selected_task()

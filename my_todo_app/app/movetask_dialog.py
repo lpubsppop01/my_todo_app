@@ -1,41 +1,34 @@
 #! /usr/bin/env python
 # -*- coding: utf-8-unix -*-
 
-"""Implement dialog to specify the task list parameters to add or edit."""
+"""Implement dialog to specify parameters for Move-Task operation."""
 
-import copy
 import tkinter as tk
-import uuid
 from tkinter import ttk
-import tkinter.messagebox as ttk_messagebox
 from typing import *
 
 from my_todo_app.app.window_utility import show_dialog, get_center_geometry
 from my_todo_app.engine.task import TaskList
 
 
-class AddOrEditTaskListDialog:
-    """Dialog to specify the task list parameters to add or edit."""
+class MoveTaskDialog:
+    """Dialog to specify parameters for Move-Task operation."""
 
-    def __init__(self, parent: tk.Tk, item_to_edit: Optional[TaskList] = None) -> None:
+    def __init__(self, parent: tk.Tk, tasklists: List[TaskList]) -> None:
+        assert tasklists
         self._parent: tk.Tk = parent
-        if item_to_edit is not None:
-            self.result_task_list: TaskList = copy.deepcopy(item_to_edit)
-            self._edits: bool = True
-        else:
-            self.result_task_list: TaskList = TaskList(str(uuid.uuid4()), '', 0)
-            self._edits: bool = False
+        self._tasklists: List[TaskList] = tasklists
+        self.result_tasklist: Optional[TaskList] = tasklists[0]
         self._ok: bool = False
         self._layout()
 
     def _layout(self) -> None:
         margin = 4
         margin_half = 2
-        margin_double = 8
 
         self._dialog = tk.Toplevel(self._parent)
-        self._dialog.title('Edit Task List' if self._edits else 'Add Task List')
-        self._dialog.geometry(get_center_geometry(self._parent, 300, 70))
+        self._dialog.title('Move Task')
+        self._dialog.geometry(get_center_geometry(self._parent, 300, 200))
         self._dialog.resizable(False, False)
         self._dialog.grid_rowconfigure(0, weight=1)
         self._dialog.grid_rowconfigure(1, weight=0)
@@ -46,16 +39,24 @@ class AddOrEditTaskListDialog:
         top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
                        padx=(margin, margin), pady=(margin, margin_half))
         top_frame.grid_rowconfigure(0, weight=1)
-        top_frame.grid_columnconfigure(0, weight=0)
-        top_frame.grid_columnconfigure(1, weight=1)
+        top_frame.grid_columnconfigure(0, weight=1)
+        top_frame.grid_columnconfigure(1, weight=0)
 
-        name_label = ttk.Label(top_frame, text='Name')
-        name_label.grid(row=0, column=0, sticky=(tk.N, tk.W), padx=(0, margin_double))
+        self._tasklist_listbox = tk.Listbox(top_frame, exportselection=False, width=15)
+        self._tasklist_listbox.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
+                                    padx=(margin, margin_half), pady=(margin_half, margin))
+        index = 0
+        for tasklist in self._tasklists:
+            label = tasklist.name if tasklist.name else 'Empty'
+            self._tasklist_listbox.insert(index, label)
+            index += 1
+        self._tasklist_listbox.selection_set(0)
+        self._tasklist_listbox.focus_set()
 
-        self._name_entry = ttk.Entry(top_frame)
-        self._name_entry.grid(row=0, column=1, sticky=(tk.N, tk.E, tk.W))
-        self._name_entry.insert(0, self.result_task_list.name)
-        self._name_entry.focus_set()
+        tasklist_listbox_scrollbar = ttk.Scrollbar(top_frame, orient=tk.VERTICAL,
+                                                   command=self._tasklist_listbox.yview)
+        self._tasklist_listbox['yscrollcommand'] = tasklist_listbox_scrollbar.set
+        tasklist_listbox_scrollbar.grid(row=0, column=1, sticky=(tk.N, tk.S))
 
         bottom_frame = ttk.Frame(self._dialog)
         bottom_frame.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E),
@@ -79,12 +80,16 @@ class AddOrEditTaskListDialog:
         self._on_ok()
 
     def _on_ok(self) -> None:
-        self.result_task_list.name = self._name_entry.get()
-        if self.result_task_list.name:
-            self._ok = True
-            self._dialog.destroy()
-        else:
-            ttk_messagebox.showerror('Error', 'Name is required.')
+        self.result_tasklist = self._get_selected_tasklist()
+        self._ok = True
+        self._dialog.destroy()
+
+    def _get_selected_tasklist(self) -> Optional[TaskList]:
+        selected_tasklist: Optional[TaskList] = None
+        selected_indices = self._tasklist_listbox.curselection()
+        if selected_indices:
+            selected_tasklist = self._tasklists[selected_indices[0]]
+        return selected_tasklist
 
     def _cancel_button_clicked(self) -> None:
         self._on_cancel()

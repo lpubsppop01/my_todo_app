@@ -75,7 +75,7 @@ class TaskDatabase(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def upsert_task_list(self, task_list: TaskList) -> None:
+    def upsert_tasklist(self, tasklist: TaskList) -> None:
         pass
 
     @abstractmethod
@@ -83,7 +83,7 @@ class TaskDatabase(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def delete_task_list(self, id_: str) -> None:
+    def delete_tasklist(self, id_: str) -> None:
         pass
 
     @abstractmethod
@@ -92,5 +92,5 @@ class TaskDatabase(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_task_lists(self, id_: Optional[str] = None) -> List[TaskList]:
+    def get_tasklists(self, id_: Optional[str] = None) -> List[TaskList]:
         pass
