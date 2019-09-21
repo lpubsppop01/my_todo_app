@@ -11,7 +11,8 @@ from datetime import datetime
 from tkinter import ttk
 from typing import *
 
-from my_todo_app.app.task_list_dialog import TaskListDialog
+from my_todo_app.app.move_task_dialog import MoveTaskDialog
+from my_todo_app.app.add_or_edit_task_list_dialog import AddOrEditTaskListDialog
 from my_todo_app.engine.task import TaskDatabase, TaskList, Task
 
 
@@ -106,7 +107,8 @@ class MainWindow:
         right_top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E),
                              padx=(margin_half, margin), pady=(margin, margin_half))
 
-        move_task_button = ttk.Button(right_top_frame, text='Move')
+        move_task_button = ttk.Button(right_top_frame, text='Move',
+                                      command=self._move_task_button_clicked)
         move_task_button.grid(row=0, column=0, sticky=tk.E)
 
         remove_task_button = ttk.Button(right_top_frame, text='Remove',
@@ -123,7 +125,7 @@ class MainWindow:
                                   padx=(margin_half, margin), pady=(margin_half, margin))
 
     def _add_task_list_button_clicked(self):
-        dialog = TaskListDialog(self._root)
+        dialog = AddOrEditTaskListDialog(self._root)
         if dialog.show_dialog():
             if self._shown_task_lists:
                 sort_key_max = max([task_list.sort_key for task_list in self._shown_task_lists])
@@ -136,7 +138,7 @@ class MainWindow:
             ttk_messagebox.showerror('Error', 'No task list is selected.')
             return
 
-        dialog = TaskListDialog(self._root, self._last_selected_task_list)
+        dialog = AddOrEditTaskListDialog(self._root, self._last_selected_task_list)
         if dialog.show_dialog():
             self._last_selected_task_list = dialog.result_task_list
             self._db.upsert_task_list(dialog.result_task_list)
@@ -168,6 +170,20 @@ class MainWindow:
         self._db.upsert_task(self._last_selected_task)
         self._update_task_listbox()
         self._task_name_entry.focus_set()
+
+    def _move_task_button_clicked(self):
+        if self._last_selected_task is None:
+            ttk_messagebox.showerror('Error', 'No task is selected.')
+            return
+
+        candidate_task_lists = [task_list for task_list in self._shown_task_lists
+                                if task_list.id != self._last_selected_task.parent_id]
+
+        dialog = MoveTaskDialog(self._root, candidate_task_lists)
+        if dialog.show_dialog():
+            self._last_selected_task.parent_id = dialog.result_task_list.id
+            self._db.upsert_task(self._last_selected_task)
+            self._update_task_listbox()
 
     def _remove_task_button_clicked(self):
         if self._last_selected_task is None:
@@ -205,6 +221,7 @@ class MainWindow:
 
     # noinspection PyUnusedLocal
     def _task_list_listbox_selected(self, event):
+        self._last_selected_task = None
         self._update_task_listbox()
 
     # noinspection PyUnusedLocal
