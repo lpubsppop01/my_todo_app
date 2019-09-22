@@ -10,6 +10,7 @@ from tkinter import ttk
 import tkinter.messagebox as ttk_messagebox
 from typing import *
 
+from my_todo_app.app.theme import Theme
 from my_todo_app.app.window_utility import show_dialog, get_center_geometry
 from my_todo_app.engine.task import TaskList
 
@@ -17,8 +18,9 @@ from my_todo_app.engine.task import TaskList
 class AddOrEditTaskListDialog:
     """Dialog to specify the task list parameters to add or edit."""
 
-    def __init__(self, parent: tk.Tk, item_to_edit: Optional[TaskList] = None) -> None:
+    def __init__(self, parent: tk.Tk, theme: Theme, item_to_edit: Optional[TaskList] = None) -> None:
         self._parent: tk.Tk = parent
+        self._theme: Theme = theme
         if item_to_edit is not None:
             self.result_tasklist: TaskList = copy.deepcopy(item_to_edit)
             self._edits: bool = True
@@ -29,10 +31,6 @@ class AddOrEditTaskListDialog:
         self._layout()
 
     def _layout(self) -> None:
-        margin = 4
-        margin_half = 2
-        margin_double = 8
-
         self._dialog = tk.Toplevel(self._parent)
         self._dialog.title('Edit Task List' if self._edits else 'Add Task List')
         self._dialog.geometry(get_center_geometry(self._parent, 300, 70))
@@ -42,32 +40,50 @@ class AddOrEditTaskListDialog:
         self._dialog.grid_columnconfigure(0, weight=1)
         self._dialog.bind('<Any-KeyPress>', self._key_pressed)
 
-        top_frame = ttk.Frame(self._dialog)
+        STYLE_FRAME = 'dialog.TFrame'
+        STYLE_LABEL = 'dialog.TLabel'
+
+        style = ttk.Style(self._dialog)
+        self._theme.configure(style)
+        self._theme.configure_main_frame(style, STYLE_FRAME)
+        style.configure(STYLE_LABEL, font=self._theme.normal_font,
+                        foreground=self._theme.main_foreground, background=self._theme.main_background)
+
+        dialog_frame = ttk.Frame(self._dialog, style=STYLE_FRAME)
+        dialog_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W))
+        dialog_frame.grid_rowconfigure(0, weight=1)
+        dialog_frame.grid_columnconfigure(0, weight=1)
+
+        top_frame = ttk.Frame(dialog_frame, style=STYLE_FRAME)
         top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
-                       padx=(margin, margin), pady=(margin, margin_half))
+                       padx=(self._theme.margin, self._theme.margin),
+                       pady=(self._theme.margin, self._theme.margin_half))
         top_frame.grid_rowconfigure(0, weight=1)
         top_frame.grid_columnconfigure(0, weight=0)
         top_frame.grid_columnconfigure(1, weight=1)
 
-        name_label = ttk.Label(top_frame, text='Name')
-        name_label.grid(row=0, column=0, sticky=(tk.N, tk.W), padx=(0, margin_double))
+        name_label = ttk.Label(top_frame, text='Name', style=STYLE_LABEL)
+        name_label.grid(row=0, column=0, sticky=tk.W, padx=(0, self._theme.margin_double))
 
-        self._name_entry = ttk.Entry(top_frame)
-        self._name_entry.grid(row=0, column=1, sticky=(tk.N, tk.E, tk.W))
+        self._name_entry = tk.Entry(top_frame, font=self._theme.normal_font, borderwidth=0)
+        self._name_entry.grid(row=0, column=1, sticky=(tk.E, tk.W))
         self._name_entry.insert(0, self.result_tasklist.name)
         self._name_entry.focus_set()
 
-        bottom_frame = ttk.Frame(self._dialog)
+        bottom_frame = ttk.Frame(dialog_frame, style=STYLE_FRAME)
         bottom_frame.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E),
-                          padx=(margin, margin), pady=(margin_half, margin))
+                          padx=(self._theme.margin, self._theme.margin),
+                          pady=(self._theme.margin_half, self._theme.margin))
         bottom_frame.grid_rowconfigure(0, weight=1)
         bottom_frame.grid_columnconfigure(0, weight=1)
 
-        ok_button = ttk.Button(bottom_frame, text='OK', command=self._ok_button_clicked)
+        ok_button = tk.Button(bottom_frame, text='OK', width=self._theme.button_width, relief=tk.FLAT,
+                              command=self._ok_button_clicked)
         ok_button.grid(row=0, column=0, sticky=tk.E)
 
-        cancel_button = ttk.Button(bottom_frame, text='Cancel', command=self._cancel_button_clicked)
-        cancel_button.grid(row=0, column=1, sticky=tk.E)
+        cancel_button = tk.Button(bottom_frame, text='Cancel', width=self._theme.button_width, relief=tk.FLAT,
+                                  command=self._cancel_button_clicked)
+        cancel_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
 
     def _key_pressed(self, event) -> None:
         if event.keysym == 'Return':
