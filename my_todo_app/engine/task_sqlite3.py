@@ -41,15 +41,16 @@ class SQLite3TaskDatabase(TaskDatabase):
         cursor.execute('''
             create table if not exists tasks (
                 id text primary key not null,
-                parent_id text,
+                list_id text,
+                parent_task_id text,
                 name text,
                 tags text,
-                done bool,
+                completed bool,
                 created_at integer,
                 updated_at integer,
-                sort_key float
+                completed_at integer
             )''')
-        cursor.execute('create index task_done_index on tasks(done)')
+        cursor.execute('create index task_completed_index on tasks(completed)')
         cursor.execute('''
             create table if not exists tasklists (
                 id text primary key not null,
@@ -67,11 +68,12 @@ class SQLite3TaskDatabase(TaskDatabase):
             cursor = self._conn.cursor()
 
         upsert_sql = '''
-            insert or replace into tasks (id, parent_id, name, tags, done, created_at, updated_at, sort_key)
-            values (?, ?, ?, ?, ?, ?, ?, ?);
+            insert or replace into tasks (id, list_id, parent_task_id, name, tags, completed,
+                                          created_at, updated_at, completed_at)
+            values (?, ?, ?, ?, ?, ?, ?, ?, ?);
         '''
-        cursor.execute(upsert_sql, [task.id, task.parent_id, task.name, task.tags, task.done, task.created_at,
-                                    task.updated_at, task.sort_key])
+        cursor.execute(upsert_sql, [task.id, task.list_id, task.parent_task_id, task.name, task.tags, task.completed,
+                                    task.created_at, task.updated_at, task.completed_at])
 
         if not self._cursor:
             self._conn.commit()
@@ -115,34 +117,40 @@ class SQLite3TaskDatabase(TaskDatabase):
         if not self._cursor:
             self._conn.commit()
 
-    def get_tasks(self, id_: Optional[str] = None, parent_id: Optional[str] = None,
-                  done: Optional[bool] = None) -> List[Task]:
+    def get_tasks(self, id_: Optional[str] = None, list_id: Optional[str] = None, parent_task_id: Optional[str] = None,
+                  completed: Optional[bool] = None) -> List[Task]:
         select_sql = 'select * from tasks'
         select_params = []
         if id_ is not None:
             select_sql += ' and' if select_params else ' where'
             select_sql += ' id = ?'
             select_params.append(id_)
-        if parent_id is not None:
+        if list_id is not None:
             select_sql += ' and' if select_params else ' where'
-            select_sql += ' parent_id = ?'
-            select_params.append(parent_id)
-        if done is not None:
+            select_sql += ' list_id = ?'
+            select_params.append(list_id)
+        if parent_task_id is not None:
             select_sql += ' and' if select_params else ' where'
-            select_sql += ' done = ?'
-            select_params.append(int(done))
-        select_sql += ' order by sort_key'
+            select_sql += ' parent_task_id = ?'
+            select_params.append(parent_task_id)
+        if completed is not None:
+            select_sql += ' and' if select_params else ' where'
+            select_sql += ' completed = ?'
+            select_params.append(int(completed))
+        select_sql += ' order by updated_at desc'
         tasks = []
         for row in self._conn.execute(select_sql, select_params):
             id_: str = row[0]
-            parent_id: str = row[1]
-            name: str = row[2]
-            tags: str = row[3]
-            done: bool = bool(int(row[4]))
-            created_at: int = row[5]
-            updated_at: int = row[6]
-            sort_key: float = float(row[7])
-            tasks.append(Task(id_, parent_id, name, tags, done, created_at, updated_at, sort_key))
+            list_id: str = row[1]
+            parent_task_id: str = row[2]
+            name: str = row[3]
+            tags: str = row[4]
+            completed: bool = bool(int(row[5]))
+            created_at: int = row[6]
+            updated_at: int = row[7]
+            completed_at: int = row[8]
+            tasks.append(Task(id_, list_id, parent_task_id, name, tags, completed,
+                              created_at, updated_at, completed_at))
         return tasks
 
     def get_tasklists(self, id_: Optional[str] = None) -> List[TaskList]:

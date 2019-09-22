@@ -31,6 +31,7 @@ class Theme:
         self._sub_background = 'white'
         self._sub_foreground = 'black'
 
+    # noinspection PyMethodMayBeStatic
     def configure(self, style: ttk.Style) -> None:
         style.theme_use('default')
 

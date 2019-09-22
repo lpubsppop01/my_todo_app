@@ -12,21 +12,24 @@ from typing import *
 class Task:
     """A task."""
 
-    def __init__(self, id_: str, parent_id: str, name: str, tags: str, done: bool, created_at: int, updated_at: int,
-                 sort_key: float):
+    def __init__(self, id_: str, list_id: str, parent_task_id: str, name: str, tags: str, completed: bool,
+                 created_at: int, updated_at: int, completed_at: int):
         self.id: str = id_
-        self.parent_id: str = parent_id
+        self.list_id: str = list_id
+        self.parent_task_id: str = parent_task_id
         self.name: str = name
         self.tags: str = tags
-        self.done: bool = done
+        self.completed: bool = completed
         self.created_at: int = created_at
         self.updated_at: int = updated_at
-        self.sort_key: float = sort_key
+        self.completed_at: int = completed_at
 
     def equals(self, another: Task):
         if self.id != another.id:
             return False
-        if self.parent_id != another.parent_id:
+        if self.list_id != another.list_id:
+            return False
+        if self.parent_task_id != another.parent_task_id:
             return False
         if self.name != another.name:
             return False
@@ -36,7 +39,7 @@ class Task:
             return False
         if self.updated_at != another.updated_at:
             return False
-        if self.sort_key != another.sort_key:
+        if self.completed_at != another.completed_at:
             return False
         return True
 
@@ -87,8 +90,8 @@ class TaskDatabase(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_tasks(self, id_: Optional[str] = None, parent_id: Optional[str] = None,
-                  done: Optional[bool] = None) -> List[Task]:
+    def get_tasks(self, id_: Optional[str] = None, list_id: Optional[str] = None, parent_task_id: Optional[str] = None,
+                  completed: Optional[bool] = None) -> List[Task]:
         pass
 
     @abstractmethod

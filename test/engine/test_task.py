@@ -45,37 +45,44 @@ class TestTaskDatabase(TestCase):
         self.assertTrue(next_action.equals(tasklists[0]))
         self.assertTrue(inbox.equals(tasklists[1]))
 
-        # Insert 2 tasks
-        task1 = Task(str(uuid.uuid4()), inbox.id, 'Task 1', 'test', False, 100, 100, 0)
-        task2 = Task(str(uuid.uuid4()), inbox.id, 'Task 2', 'test', False, 100, 100, 10)
+        # Insert 2 tasks and 1 sub task
+        task1 = Task(str(uuid.uuid4()), inbox.id, '', 'Task 1', 'test', False, 100, 110, 0)  # Set newer updated_at
+        task2 = Task(str(uuid.uuid4()), inbox.id, '', 'Task 2', 'test', False, 100, 100, 0)
+        task2_1 = Task(str(uuid.uuid4()), inbox.id, task2.id, 'Task 2-1', 'test', False, 100, 100, 0)
         db.upsert_task(task1)
         db.upsert_task(task2)
-        inbox_tasks = db.get_tasks(parent_id=inbox.id)
-        self.assertEqual(2, len(inbox_tasks))
+        db.upsert_task(task2_1)
+        inbox_tasks = db.get_tasks(list_id=inbox.id)
+        self.assertEqual(3, len(inbox_tasks))
         self.assertTrue(task1.equals(inbox_tasks[0]))
         self.assertTrue(task2.equals(inbox_tasks[1]))
-        self.assertEqual(0, len(db.get_tasks(parent_id=next_action.id)))
+        self.assertTrue(task2_1.equals(inbox_tasks[2]))
+        self.assertEqual(0, len(db.get_tasks(list_id=next_action.id)))
 
         # Delete 1 of the tasks
-        db.delete_task(task2.id)
-        inbox_tasks = db.get_tasks(parent_id=inbox.id)
-        self.assertEqual(1, len(inbox_tasks))
+        db.delete_task(task1.id)
+        inbox_tasks = db.get_tasks(list_id=inbox.id)
+        self.assertEqual(2, len(inbox_tasks))
 
         # Reinsert the deleted task and update it
-        db.upsert_task(task2)
-        task2.parent_id = next_action.id
-        task2.name = 'Bar'
-        task2.tags = 'test2'
-        task2.created_at = 50
-        task2.updated_at = 150
-        task2.sort_key = -10
-        db.upsert_task(task2)
-        inbox_tasks = db.get_tasks(parent_id=inbox.id)
-        next_action_tasks = db.get_tasks(parent_id=next_action.id)
-        self.assertEqual(1, len(inbox_tasks))
-        self.assertTrue(task1.equals(inbox_tasks[0]))
+        db.upsert_task(task1)
+        task1.list_id = next_action.id
+        task1.name = 'Bar'
+        task1.tags = 'test2'
+        task1.created_at = 50
+        task1.updated_at = 150
+        task1.completed_at = 15
+        db.upsert_task(task1)
+        inbox_tasks = db.get_tasks(list_id=inbox.id)
+        next_action_tasks = db.get_tasks(list_id=next_action.id)
+        self.assertEqual(2, len(inbox_tasks))
+        self.assertTrue(task2.equals(inbox_tasks[0]))
+        self.assertTrue(task2_1.equals(inbox_tasks[1]))
         self.assertEqual(1, len(next_action_tasks))
-        self.assertTrue(task2.equals(next_action_tasks[0]))
+        self.assertTrue(task1.equals(next_action_tasks[0]))
+
+        # todo: Test that moving only sub task fails
+        # todo: Test that moving a parent task also follows sub tasks
 
         del db
         os.remove(db_path)

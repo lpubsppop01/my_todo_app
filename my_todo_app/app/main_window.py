@@ -203,11 +203,7 @@ class MainWindow:
         id_ = str(uuid.uuid4())
         parent_id = self._last_selected_tasklist.id
         timestamp = int(datetime.now().timestamp())
-        sort_key = 0.0
-        if self._shown_tasks:
-            sort_key_max = max([task.sort_key for task in self._shown_tasks])
-            sort_key = sort_key_max + 1
-        self._last_selected_task = Task(id_, parent_id, '', '', False, timestamp, timestamp, sort_key)
+        self._last_selected_task = Task(id_, parent_id, '', '', '', False, timestamp, timestamp, 0)
         self._db.upsert_task(self._last_selected_task)
         self._update_task_treeview()
         self._task_name_entry.focus_set()
@@ -218,11 +214,12 @@ class MainWindow:
             return
 
         candidate_tasklists = [tasklist for tasklist in self._shown_tasklists
-                               if tasklist.id != self._last_selected_task.parent_id]
+                               if tasklist.id != self._last_selected_task.list_id]
 
         dialog = MoveTaskDialog(self._root, self._theme, candidate_tasklists)
         if dialog.show_dialog():
-            self._last_selected_task.parent_id = dialog.result_tasklist.id
+            self._last_selected_task.list_id = dialog.result_tasklist.id
+            self._last_selected_task.updated_at = int(datetime.now().timestamp())
             self._db.upsert_task(self._last_selected_task)
             self._update_task_treeview()
 
@@ -257,6 +254,7 @@ class MainWindow:
             return
 
         self._last_selected_task.name = self._task_name_entry.get()
+        self._last_selected_task.updated_at = int(datetime.now().timestamp())
         self._db.upsert_task(self._last_selected_task)
         self._update_task_treeview()
 
@@ -289,7 +287,7 @@ class MainWindow:
         self._last_selected_tasklist = self._get_selected_tasklist()
         self._task_treeview.delete(*self._task_treeview.get_children())
         if self._last_selected_tasklist:
-            self._shown_tasks = self._db.get_tasks(parent_id=self._last_selected_tasklist.id)
+            self._shown_tasks = self._db.get_tasks(list_id=self._last_selected_tasklist.id)
             item_id_to_select: Optional[str] = None
             item_id_to_select_is_fixed: bool = False
             for task in self._shown_tasks:
@@ -297,7 +295,7 @@ class MainWindow:
                 item_id = self._task_treeview.insert('', tk.END, text=label, values=task.id)
                 if not item_id_to_select_is_fixed:
                     item_id_to_select = item_id
-                    if not self._last_selected_task or self._last_selected_task.sort_key <= task.sort_key:
+                    if not self._last_selected_task or self._last_selected_task.updated_at >= task.updated_at:
                         item_id_to_select_is_fixed = True
             if item_id_to_select:
                 self._task_treeview.selection_set(item_id_to_select)
