@@ -52,8 +52,8 @@ class MoveTaskDialog:
         self._tasklist_listbox.selection_set(0)
         self._tasklist_listbox.focus_set()
 
-        tasklist_listbox_scrollbar = ttk.Scrollbar(top_frame, orient=tk.VERTICAL,
-                                                   command=self._tasklist_listbox.yview)
+        tasklist_listbox_scrollbar = tk.Scrollbar(top_frame, orient=tk.VERTICAL,
+                                                  command=self._tasklist_listbox.yview)
         self._tasklist_listbox['yscrollcommand'] = tasklist_listbox_scrollbar.set
         tasklist_listbox_scrollbar.grid(row=0, column=1, sticky=(tk.N, tk.S))
 
