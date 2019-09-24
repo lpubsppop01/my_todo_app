@@ -198,6 +198,9 @@ class MainWindow:
         if self._last_selected_tasklist is None:
             ttk_messagebox.showerror('Error', 'No task list is selected.')
             return
+        if self._shown_tasks:
+            ttk_messagebox.showerror('Error', 'The selected task list is not empty.')
+            return
 
         message = 'Really remove {}?'.format(self._last_selected_tasklist.name)
         if ttk_messagebox.askokcancel('Confirm', message):
