@@ -12,14 +12,16 @@ from typing import *
 class Task:
     """A task."""
 
-    def __init__(self, id_: str, list_id: str, parent_task_id: str, name: str, tags: str, completed: bool,
-                 created_at: int, updated_at: int, completed_at: int):
+    def __init__(self, id_: str, list_id: str, parent_task_id: str, name: str, tags: str, memo: str, completed: bool,
+                 archived: bool, created_at: int, updated_at: int, completed_at: int):
         self.id: str = id_
         self.list_id: str = list_id
         self.parent_task_id: str = parent_task_id
         self.name: str = name
         self.tags: str = tags
+        self.memo: str = memo
         self.completed: bool = completed
+        self.archived: bool = archived
         self.created_at: int = created_at
         self.updated_at: int = updated_at
         self.completed_at: int = completed_at
@@ -34,6 +36,12 @@ class Task:
         if self.name != another.name:
             return False
         if self.tags != another.tags:
+            return False
+        if self.memo != another.memo:
+            return False
+        if self.completed != another.completed:
+            return False
+        if self.archived != another.archived:
             return False
         if self.created_at != another.created_at:
             return False

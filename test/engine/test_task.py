@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8-unix -*-
-
+import copy
 import os
 import uuid
 from unittest import TestCase
@@ -11,7 +11,7 @@ from my_todo_app.engine.task_sqlite3 import SQLite3TaskDatabase
 
 class TestTaskDatabase(TestCase):
 
-    def test_it_works(self):
+    def test_crud(self):
         db_path = os.path.join(os.path.dirname(__file__), 'TestTaskDatabase_test_it_works.sqlite3')
         if os.path.exists(db_path):
             os.remove(db_path)
@@ -46,9 +46,9 @@ class TestTaskDatabase(TestCase):
         self.assertTrue(inbox.equals(tasklists[1]))
 
         # Insert 2 tasks and 1 sub task
-        task1 = Task(str(uuid.uuid4()), inbox.id, '', 'Task 1', 'test', False, 100, 110, 0)  # Set newer updated_at
-        task2 = Task(str(uuid.uuid4()), inbox.id, '', 'Task 2', 'test', False, 100, 100, 0)
-        task2_1 = Task(str(uuid.uuid4()), inbox.id, task2.id, 'Task 2-1', 'test', False, 100, 100, 0)
+        task1 = Task(str(uuid.uuid4()), inbox.id, '', 'Task 1', 'test', '', False, False, 10, 11, 0)
+        task2 = Task(str(uuid.uuid4()), inbox.id, '', 'Task 2', 'test', '', False, False, 10, 10, 0)
+        task2_1 = Task(str(uuid.uuid4()), inbox.id, task2.id, 'Task 2-1', 'test', '', False, False, 10, 10, 0)
         db.upsert_task(task1)
         db.upsert_task(task2)
         db.upsert_task(task2_1)
@@ -86,3 +86,53 @@ class TestTaskDatabase(TestCase):
 
         del db
         os.remove(db_path)
+
+    def test_equals(self):
+        task = Task(str(uuid.uuid4()), '', '', '', '', '', False, False, 0, 0, 0)
+
+        not_changed = copy.deepcopy(task)
+        self.assertTrue(task.equals(not_changed))
+
+        id_changed = copy.deepcopy(task)
+        id_changed.id = str(uuid.uuid4())
+        self.assertFalse(task.equals(id_changed))
+
+        list_id_changed = copy.deepcopy(task)
+        list_id_changed.list_id = str(uuid.uuid4())
+        self.assertFalse(task.equals(list_id_changed))
+
+        parent_task_id_changed = copy.deepcopy(task)
+        parent_task_id_changed.parent_task_id = str(uuid.uuid4())
+        self.assertFalse(task.equals(parent_task_id_changed))
+
+        name_changed = copy.deepcopy(task)
+        name_changed.name = 'Task 1'
+        self.assertFalse(task.equals(name_changed))
+
+        tags_changed = copy.deepcopy(task)
+        tags_changed.tags = 'test'
+        self.assertFalse(task.equals(tags_changed))
+
+        memo_changed = copy.deepcopy(task)
+        memo_changed.memo = 'Memo'
+        self.assertFalse(task.equals(memo_changed))
+
+        completed_changed = copy.deepcopy(task)
+        completed_changed.completed = True
+        self.assertFalse(task.equals(completed_changed))
+
+        archived_changed = copy.deepcopy(task)
+        archived_changed.archived = True
+        self.assertFalse(task.equals(archived_changed))
+
+        created_at_changed = copy.deepcopy(task)
+        created_at_changed.created_at = 20
+        self.assertFalse(task.equals(created_at_changed))
+
+        updated_at_changed = copy.deepcopy(task)
+        updated_at_changed.updated_at = 20
+        self.assertFalse(task.equals(updated_at_changed))
+
+        completed_at_changed = copy.deepcopy(task)
+        completed_at_changed.completed_at = 20
+        self.assertFalse(task.equals(completed_at_changed))

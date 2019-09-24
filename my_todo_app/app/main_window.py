@@ -203,7 +203,7 @@ class MainWindow:
         id_ = str(uuid.uuid4())
         parent_id = self._last_selected_tasklist.id
         timestamp = int(datetime.now().timestamp())
-        self._last_selected_task = Task(id_, parent_id, '', '', '', False, timestamp, timestamp, 0)
+        self._last_selected_task = Task(id_, parent_id, '', '', '', '', False, False, timestamp, timestamp, 0)
         self._db.upsert_task(self._last_selected_task)
         self._update_task_treeview()
         self._task_name_entry.focus_set()

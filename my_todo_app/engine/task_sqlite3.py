@@ -45,7 +45,9 @@ class SQLite3TaskDatabase(TaskDatabase):
                 parent_task_id text,
                 name text,
                 tags text,
+                memo text,
                 completed bool,
+                archived bool,
                 created_at integer,
                 updated_at integer,
                 completed_at integer
@@ -68,12 +70,12 @@ class SQLite3TaskDatabase(TaskDatabase):
             cursor = self._conn.cursor()
 
         upsert_sql = '''
-            insert or replace into tasks (id, list_id, parent_task_id, name, tags, completed,
+            insert or replace into tasks (id, list_id, parent_task_id, name, tags, memo, completed, archived,
                                           created_at, updated_at, completed_at)
-            values (?, ?, ?, ?, ?, ?, ?, ?, ?);
+            values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         '''
-        cursor.execute(upsert_sql, [task.id, task.list_id, task.parent_task_id, task.name, task.tags, task.completed,
-                                    task.created_at, task.updated_at, task.completed_at])
+        cursor.execute(upsert_sql, [task.id, task.list_id, task.parent_task_id, task.name, task.tags, task.memo,
+                                    task.completed, task.archived, task.created_at, task.updated_at, task.completed_at])
 
         if not self._cursor:
             self._conn.commit()
@@ -145,11 +147,13 @@ class SQLite3TaskDatabase(TaskDatabase):
             parent_task_id: str = row[2]
             name: str = row[3]
             tags: str = row[4]
-            completed: bool = bool(int(row[5]))
-            created_at: int = row[6]
-            updated_at: int = row[7]
-            completed_at: int = row[8]
-            tasks.append(Task(id_, list_id, parent_task_id, name, tags, completed,
+            memo: str = row[5]
+            completed: bool = bool(int(row[6]))
+            archived: bool = bool(int(row[7]))
+            created_at: int = row[8]
+            updated_at: int = row[9]
+            completed_at: int = row[10]
+            tasks.append(Task(id_, list_id, parent_task_id, name, tags, memo, completed, archived,
                               created_at, updated_at, completed_at))
         return tasks
 
