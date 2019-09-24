@@ -99,7 +99,7 @@ class TaskDatabase(metaclass=ABCMeta):
 
     @abstractmethod
     def get_tasks(self, id_: Optional[str] = None, list_id: Optional[str] = None, parent_task_id: Optional[str] = None,
-                  completed: Optional[bool] = None) -> List[Task]:
+                  completed: Optional[bool] = None, archived: Optional[bool] = None) -> List[Task]:
         pass
 
     @abstractmethod

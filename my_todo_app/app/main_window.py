@@ -125,6 +125,15 @@ class MainWindow:
                                      command=self._move_task_button_clicked)
         move_task_button.grid(row=1, column=1, sticky=tk.E, padx=(self._theme.margin, 0), pady=(self._theme.margin, 0))
 
+        self._shows_archive_checkbox_value = tk.BooleanVar()
+        self._shows_archive_checkbox = tk.Checkbutton(center_top_frame, text='Show Archive',
+                                                      onvalue=True, offvalue=False,
+                                                      variable=self._shows_archive_checkbox_value,
+                                                      background=self._theme.main_background,
+                                                      command=self._shows_archive_checkbox_changed)
+        self._shows_archive_checkbox.grid(row=1, column=2, columnspan=2, sticky=tk.E,
+                                          padx=(self._theme.margin, 0), pady=(self._theme.margin, 0))
+
         self._task_treeview = ttk.Treeview(center_frame, show='tree', style=STYLE_TASK_TREEVIEW)
         self._task_treeview.column('#0', width=300)
         # self._tasklist_treeview.tag_configure('done', background='yellow')
@@ -264,6 +273,10 @@ class MainWindow:
         self._update_task_treeview()
 
     # noinspection PyUnusedLocal
+    def _shows_archive_checkbox_changed(self):
+        self._update_task_treeview()
+
+    # noinspection PyUnusedLocal
     def _task_treeview_selected(self, event):
         self._update_task_controls()
 
@@ -287,7 +300,10 @@ class MainWindow:
         self._last_selected_tasklist = self._get_selected_tasklist()
         self._task_treeview.delete(*self._task_treeview.get_children())
         if self._last_selected_tasklist:
-            self._shown_tasks = self._db.get_tasks(list_id=self._last_selected_tasklist.id)
+            archived: Optional[bool] = None
+            if not self._shows_archive_checkbox_value.get():
+                archived = False
+            self._shown_tasks = self._db.get_tasks(list_id=self._last_selected_tasklist.id, archived=archived)
             item_id_to_select: Optional[str] = None
             item_id_to_select_is_fixed: bool = False
             for task in self._shown_tasks:

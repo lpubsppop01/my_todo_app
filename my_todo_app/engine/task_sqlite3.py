@@ -120,7 +120,7 @@ class SQLite3TaskDatabase(TaskDatabase):
             self._conn.commit()
 
     def get_tasks(self, id_: Optional[str] = None, list_id: Optional[str] = None, parent_task_id: Optional[str] = None,
-                  completed: Optional[bool] = None) -> List[Task]:
+                  completed: Optional[bool] = None, archived: Optional[bool] = None) -> List[Task]:
         select_sql = 'select * from tasks'
         select_params = []
         if id_ is not None:
@@ -139,6 +139,10 @@ class SQLite3TaskDatabase(TaskDatabase):
             select_sql += ' and' if select_params else ' where'
             select_sql += ' completed = ?'
             select_params.append(int(completed))
+        if archived is not None:
+            select_sql += ' and' if select_params else ' where'
+            select_sql += ' archived = ?'
+            select_params.append(int(archived))
         select_sql += ' order by updated_at desc'
         tasks = []
         for row in self._conn.execute(select_sql, select_params):
