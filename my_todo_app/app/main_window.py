@@ -35,7 +35,7 @@ class MainWindow:
         self._root.geometry('1024x600')
         self._root.grid_rowconfigure(0, weight=1)
         self._root.grid_columnconfigure(0, weight=0)
-        self._root.grid_columnconfigure(1, weight=0)
+        self._root.grid_columnconfigure(1, weight=1, minsize=300)
         self._root.grid_columnconfigure(2, weight=1)
         self._root.bind('<Any-KeyPress>', self._key_pressed)
 
@@ -131,7 +131,7 @@ class MainWindow:
                                                       variable=self._shows_archive_checkbox_value,
                                                       background=self._theme.main_background,
                                                       command=self._shows_archive_checkbox_changed)
-        self._shows_archive_checkbox.grid(row=1, column=2, columnspan=2, sticky=tk.E,
+        self._shows_archive_checkbox.grid(row=1, column=2, columnspan=2, sticky=tk.W,
                                           padx=(self._theme.margin, 0), pady=(self._theme.margin, 0))
 
         self._task_treeview = ttk.Treeview(center_frame, show='tree', style=STYLE_TASK_TREEVIEW)
