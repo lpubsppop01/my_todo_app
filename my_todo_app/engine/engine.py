@@ -43,21 +43,34 @@ class TaskEngine:
     def selected_task(self) -> Optional[Task]:
         return self._selected_task
 
-    def add_tasklist(self, new_tasklist: TaskList) -> None:
+    def select_tasklist(self, tasklist_id: str) -> None:
+        matched_tasklists = [t for t in self._shown_tasklists if t.id == tasklist_id]
+        if not matched_tasklists:
+            raise RuntimeError('Task list with passed ID is not shown')
+        self._selected_tasklist = matched_tasklists[0]
+        self._update_shown_tasks()
+
+    def select_task(self, task_id) -> None:
+        matched_tasks = [t for t in self._shown_tasks if t.id == task_id]
+        if not matched_tasks:
+            raise RuntimeError('Task with passed ID is not shown')
+        self._selected_task = matched_tasks[0]
+
+    def add_tasklist(self, name: str) -> None:
+        new_tasklist = TaskList(str(uuid.uuid4()), name, 0)
         if self._shown_tasklists:
             sort_key_max = max([tasklist.sort_key for tasklist in self._shown_tasklists])
             new_tasklist.sort_key = sort_key_max + 1
+        self._selected_tasklist = new_tasklist
         self._db.upsert_tasklist(new_tasklist)
         self._update_shown_tasklists()
 
-    def edit_selected_tasklist(self, new_tasklist: TaskList) -> None:
+    def edit_selected_tasklist(self, name: str) -> None:
         if self._selected_tasklist is None:
             raise RuntimeError('No task list is selected')
-        if self._selected_tasklist.id != new_tasklist.id:
-            raise RuntimeError('ID of passed task list does not match selected')
 
-        self._selected_tasklist = new_tasklist
-        self._db.upsert_tasklist(new_tasklist)
+        self._selected_tasklist.name = name
+        self._db.upsert_tasklist(self._selected_tasklist)
         self._update_shown_tasklists()
 
     def remove_selected_tasklist(self) -> None:
