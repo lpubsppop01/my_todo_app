@@ -59,7 +59,7 @@ class TaskEngine:
     def add_tasklist(self, name: str) -> None:
         new_tasklist = TaskList(str(uuid.uuid4()), name, 0)
         if self._shown_tasklists:
-            sort_key_max = max([tasklist.sort_key for tasklist in self._shown_tasklists])
+            sort_key_max = max([t.sort_key for t in self._shown_tasklists])
             new_tasklist.sort_key = sort_key_max + 1
         self._selected_tasklist = new_tasklist
         self._db.upsert_tasklist(new_tasklist)
@@ -89,7 +89,11 @@ class TaskEngine:
         id_ = str(uuid.uuid4())
         parent_id = self._selected_tasklist.id
         timestamp = int(datetime.now().timestamp())
-        self._selected_task = Task(id_, parent_id, '', '', '', '', False, False, timestamp, timestamp, 0)
+        new_task = Task(id_, parent_id, '', '', '', '', False, False, timestamp, timestamp, 0, 0)
+        if self._shown_tasks:
+            sort_key_min = min([t.sort_key for t in self._shown_tasks])
+            new_task.sort_key = sort_key_min - 1
+        self._selected_task = new_task
         self._db.upsert_task(self._selected_task)
         self._update_shown_tasks()
 

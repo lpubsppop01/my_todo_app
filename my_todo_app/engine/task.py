@@ -13,7 +13,7 @@ class Task:
     """A task."""
 
     def __init__(self, id_: str, list_id: str, parent_task_id: str, name: str, tags: str, memo: str, completed: bool,
-                 archived: bool, created_at: int, updated_at: int, completed_at: int):
+                 archived: bool, created_at: int, updated_at: int, completed_at: int, sort_key: float):
         self.id: str = id_
         self.list_id: str = list_id
         self.parent_task_id: str = parent_task_id
@@ -25,6 +25,7 @@ class Task:
         self.created_at: int = created_at
         self.updated_at: int = updated_at
         self.completed_at: int = completed_at
+        self.sort_key: float = sort_key
 
     def equals(self, another: Task):
         if self.id != another.id:
@@ -48,6 +49,8 @@ class Task:
         if self.updated_at != another.updated_at:
             return False
         if self.completed_at != another.completed_at:
+            return False
+        if self.sort_key != another.sort_key:
             return False
         return True
 

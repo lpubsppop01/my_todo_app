@@ -66,17 +66,17 @@ class TestTaskEngine(TestCase):
 
         self.assertEqual('Add TaskEngine unit tests', engine.selected_task.name)
 
-        # engine.add_empty_task()
-        #
-        # self.assertEqual(2, len(engine.shown_tasks))
-        # self.assertEqual('', engine.shown_tasks[0].name)
-        # self.assertEqual('Add TaskEngine unit tests', engine.shown_tasks[1].name)
-        # self.assertEqual(engine.shown_tasks[0], engine.selected_task)
+        engine.add_empty_task()
 
-        engine.select_task(engine.shown_tasks[0].id)
+        self.assertEqual(2, len(engine.shown_tasks))
+        self.assertEqual('', engine.shown_tasks[0].name)
+        self.assertEqual('Add TaskEngine unit tests', engine.shown_tasks[1].name)
+        self.assertEqual(engine.shown_tasks[0], engine.selected_task)
+
+        engine.select_task(engine.shown_tasks[1].id)
         engine.move_selected_task(engine.shown_tasklists[1].id)
 
-        self.assertEqual(0, len(engine.shown_tasks))
+        self.assertEqual(1, len(engine.shown_tasks))
 
         engine.select_tasklist(engine.shown_tasklists[1].id)
 

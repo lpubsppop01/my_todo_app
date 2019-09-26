@@ -26,8 +26,8 @@ def insert_sample_if_empty(db: TaskDatabase):
     db.upsert_tasklist(TaskList('next_action', 'Next Action', 1))
     db.upsert_tasklist(TaskList('someday', 'Someday', 2))
     timestamp = int(datetime.now().timestamp())
-    db.upsert_task(Task(str(uuid.uuid4()), 'inbox', '', 'Foo', '', '', False, False, timestamp, timestamp, 0))
-    db.upsert_task(Task(str(uuid.uuid4()), 'inbox', '', 'Bar', '', '', False, True, timestamp, timestamp, 0))
+    db.upsert_task(Task(str(uuid.uuid4()), 'inbox', '', 'Foo', '', '', False, False, timestamp, timestamp, 0, 0))
+    db.upsert_task(Task(str(uuid.uuid4()), 'inbox', '', 'Bar', '', '', False, True, timestamp, timestamp, 0, 1))
 
 
 def main():

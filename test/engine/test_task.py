@@ -47,9 +47,9 @@ class TestTaskDatabase(TestCase):
         self.assertTrue(inbox.equals(tasklists[1]))
 
         # Insert 2 tasks and 1 sub task
-        task1 = Task(str(uuid.uuid4()), inbox.id, '', 'Task 1', 'test', '', False, False, 10, 11, 0)
-        task2 = Task(str(uuid.uuid4()), inbox.id, '', 'Task 2', 'test', '', False, False, 10, 10, 0)
-        task2_1 = Task(str(uuid.uuid4()), inbox.id, task2.id, 'Task 2-1', 'test', '', False, False, 10, 10, 0)
+        task1 = Task(str(uuid.uuid4()), inbox.id, '', 'Task 1', 'test', '', False, False, 10, 10, 0, 0)
+        task2 = Task(str(uuid.uuid4()), inbox.id, '', 'Task 2', 'test', '', False, False, 10, 10, 0, 1)
+        task2_1 = Task(str(uuid.uuid4()), inbox.id, task2.id, 'Task 2-1', 'test', '', False, False, 10, 10, 0, 2)
         db.upsert_task(task1)
         db.upsert_task(task2)
         db.upsert_task(task2_1)
@@ -89,7 +89,7 @@ class TestTaskDatabase(TestCase):
         os.remove(db_path)
 
     def test_equals(self):
-        task = Task(str(uuid.uuid4()), '', '', '', '', '', False, False, 0, 0, 0)
+        task = Task(str(uuid.uuid4()), '', '', '', '', '', False, False, 0, 0, 0, 0)
 
         not_changed = copy.deepcopy(task)
         self.assertTrue(task.equals(not_changed))
@@ -137,3 +137,7 @@ class TestTaskDatabase(TestCase):
         completed_at_changed = copy.deepcopy(task)
         completed_at_changed.completed_at = 20
         self.assertFalse(task.equals(completed_at_changed))
+
+        sort_key_changed = copy.deepcopy(task)
+        sort_key_changed.sort_key = 10
+        self.assertFalse(task.equals(sort_key_changed))

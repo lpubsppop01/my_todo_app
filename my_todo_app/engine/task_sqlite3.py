@@ -50,7 +50,8 @@ class SQLite3TaskDatabase(TaskDatabase):
                 archived bool,
                 created_at integer,
                 updated_at integer,
-                completed_at integer
+                completed_at integer,
+                sort_key float
             )''')
         cursor.execute('create index task_completed_index on tasks(completed)')
         cursor.execute('''
@@ -71,11 +72,12 @@ class SQLite3TaskDatabase(TaskDatabase):
 
         upsert_sql = '''
             insert or replace into tasks (id, list_id, parent_task_id, name, tags, memo, completed, archived,
-                                          created_at, updated_at, completed_at)
-            values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                                          created_at, updated_at, completed_at, sort_key)
+            values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         '''
         cursor.execute(upsert_sql, [task.id, task.list_id, task.parent_task_id, task.name, task.tags, task.memo,
-                                    task.completed, task.archived, task.created_at, task.updated_at, task.completed_at])
+                                    task.completed, task.archived, task.created_at, task.updated_at, task.completed_at,
+                                    task.sort_key])
 
         if not self._cursor:
             self._conn.commit()
@@ -143,7 +145,7 @@ class SQLite3TaskDatabase(TaskDatabase):
             select_sql += ' and' if select_params else ' where'
             select_sql += ' archived = ?'
             select_params.append(int(archived))
-        select_sql += ' order by updated_at desc'
+        select_sql += ' order by sort_key'
         tasks = []
         for row in self._conn.execute(select_sql, select_params):
             id_: str = row[0]
@@ -157,8 +159,9 @@ class SQLite3TaskDatabase(TaskDatabase):
             created_at: int = row[8]
             updated_at: int = row[9]
             completed_at: int = row[10]
+            sort_key: float = row[11]
             tasks.append(Task(id_, list_id, parent_task_id, name, tags, memo, completed, archived,
-                              created_at, updated_at, completed_at))
+                              created_at, updated_at, completed_at, sort_key))
         return tasks
 
     def get_tasklists(self, id_: Optional[str] = None) -> List[TaskList]:
