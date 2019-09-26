@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8-unix -*-
+
 import copy
 import os
 import uuid
@@ -84,7 +85,7 @@ class TestTaskDatabase(TestCase):
         # todo: Test that moving only sub task fails
         # todo: Test that moving a parent task also follows sub tasks
 
-        del db
+        db.close()
         os.remove(db_path)
 
     def test_equals(self):

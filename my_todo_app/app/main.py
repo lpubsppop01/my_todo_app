@@ -36,6 +36,7 @@ def main():
     insert_sample_if_empty(db)
     window = MainWindow(db)
     window.show()
+    db.close()
 
 
 if __name__ == '__main__':

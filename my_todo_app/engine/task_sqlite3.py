@@ -22,7 +22,7 @@ class SQLite3TaskDatabase(TaskDatabase):
         if not db_exists:
             self._create_tables()
 
-    def __del__(self):
+    def close(self):
         self._conn.close()
 
     def _begin_transaction(self):

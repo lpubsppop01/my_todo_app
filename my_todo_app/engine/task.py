@@ -74,6 +74,10 @@ class TaskDatabase(metaclass=ABCMeta):
     """A database for task management."""
 
     @abstractmethod
+    def close(self):
+        pass
+
+    @abstractmethod
     def _begin_transaction(self) -> None:
         pass
 
