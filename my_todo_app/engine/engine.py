@@ -22,10 +22,16 @@ class TaskEngine:
         self._shown_tasks: List[Task] = []
         self._selected_tasklist: Optional[TaskList] = None
         self._selected_task: Optional[Task] = None
+        self._update_shown_tasklists()
 
     @property
-    def shows_archive(self):
+    def shows_archive(self) -> bool:
         return self._shows_archive
+
+    @shows_archive.setter
+    def shows_archive(self, value) -> None:
+        self._shows_archive = value
+        self._update_shown_tasks()
 
     @property
     def shown_tasklists(self) -> List[TaskList]:

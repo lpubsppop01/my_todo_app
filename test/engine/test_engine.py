@@ -85,7 +85,7 @@ class TestTaskEngine(TestCase):
         self.assertEqual(engine.shown_tasks[0], engine.selected_task)
         self.assertEqual(engine.selected_tasklist.id, engine.selected_task.list_id)
 
-        # todo
+        # todo: updated_at, shows_archive
 
         db._conn.close()
         os.remove(db_path)

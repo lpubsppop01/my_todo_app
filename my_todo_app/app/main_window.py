@@ -6,30 +6,24 @@
 import tkinter as tk
 import tkinter.messagebox as ttk_messagebox
 import tkinter.scrolledtext as tk_scrolledtext
-import uuid
-from datetime import datetime
 from tkinter import ttk
-from typing import *
 
 from my_todo_app.app.movetask_dialog import MoveTaskDialog
 from my_todo_app.app.tasklist_dialog import AddOrEditTaskListDialog
 from my_todo_app.app.theme import Theme
-from my_todo_app.engine.task import TaskDatabase, TaskList, Task
+from my_todo_app.engine.engine import TaskEngine
+from my_todo_app.engine.task import TaskDatabase
 
 
 class MainWindow:
     """A main window."""
 
-    def __init__(self, db: TaskDatabase):
-        self._db: TaskDatabase = db
-        self._shown_tasklists: List[TaskList] = []
-        self._shown_tasks: List[Task] = []
-        self._last_selected_tasklist: Optional[TaskList] = None
-        self._last_selected_task: Optional[Task] = None
+    def __init__(self, db: TaskDatabase) -> None:
+        self._engine: TaskEngine = TaskEngine(db)
         self._layout()
         self._update_tasklist_treeview()
 
-    def _layout(self):
+    def _layout(self) -> None:
         self._root = tk.Tk()
         self._root.title('My Todo')
         self._root.geometry('1024x600')
@@ -174,183 +168,139 @@ class MainWindow:
                                   padx=(self._theme.margin_double, self._theme.margin),
                                   pady=(self._theme.margin_half, self._theme.margin))
 
-    def _add_tasklist_button_clicked(self):
+    def _add_tasklist_button_clicked(self) -> None:
         dialog = AddOrEditTaskListDialog(self._root, self._theme)
         if dialog.show_dialog():
-            if self._shown_tasklists:
-                sort_key_max = max([tasklist.sort_key for tasklist in self._shown_tasklists])
-                dialog.result_tasklist.sort_key = sort_key_max + 1
-            self._db.upsert_tasklist(dialog.result_tasklist)
+            self._engine.add_tasklist(dialog.result_tasklist.name)
             self._update_tasklist_treeview()
 
-    def _edit_tasklist_button_clicked(self):
-        if self._last_selected_tasklist is None:
+    def _edit_tasklist_button_clicked(self) -> None:
+        if self._engine.selected_tasklist is None:
             ttk_messagebox.showerror('Error', 'No task list is selected.')
             return
 
-        dialog = AddOrEditTaskListDialog(self._root, self._theme, self._last_selected_tasklist)
+        dialog = AddOrEditTaskListDialog(self._root, self._theme, self._engine.selected_tasklist)
         if dialog.show_dialog():
-            self._last_selected_tasklist = dialog.result_tasklist
-            self._db.upsert_tasklist(dialog.result_tasklist)
+            self._engine.edit_selected_tasklist(dialog.result_tasklist.name)
             self._update_tasklist_treeview()
 
-    def _remove_tasklist_button_clicked(self):
-        if self._last_selected_tasklist is None:
+    def _remove_tasklist_button_clicked(self) -> None:
+        if self._engine.selected_tasklist is None:
             ttk_messagebox.showerror('Error', 'No task list is selected.')
             return
-        if self._shown_tasks:
+        if self._engine.shown_tasks:
             ttk_messagebox.showerror('Error', 'The selected task list is not empty.')
             return
 
-        message = 'Really remove {}?'.format(self._last_selected_tasklist.name)
+        message = 'Really remove {}?'.format(self._engine.selected_tasklist.name)
         if ttk_messagebox.askokcancel('Confirm', message):
-            self._db.delete_tasklist(self._last_selected_tasklist.id)
+            self._engine.remove_selected_tasklist()
             self._update_tasklist_treeview()
 
-    def _add_task_button_clicked(self):
-        if self._last_selected_tasklist is None:
+    def _add_task_button_clicked(self) -> None:
+        if self._engine.selected_tasklist is None:
             ttk_messagebox.showerror('Error', 'No task list is selected.')
             return
 
-        id_ = str(uuid.uuid4())
-        parent_id = self._last_selected_tasklist.id
-        timestamp = int(datetime.now().timestamp())
-        self._last_selected_task = Task(id_, parent_id, '', '', '', '', False, False, timestamp, timestamp, 0, 0)
-        if self._shown_tasks:
-            sort_key_min = min([t.sort_key for t in self._shown_tasks])
-            self._last_selected_task.sort_key = sort_key_min - 1
-        self._db.upsert_task(self._last_selected_task)
+        self._engine.add_empty_task()
         self._update_task_treeview()
         self._task_name_entry.focus_set()
 
-    def _move_task_button_clicked(self):
-        if self._last_selected_task is None:
+    def _move_task_button_clicked(self) -> None:
+        if self._engine.selected_task is None:
             ttk_messagebox.showerror('Error', 'No task is selected.')
             return
 
-        candidate_tasklists = [tasklist for tasklist in self._shown_tasklists
-                               if tasklist.id != self._last_selected_task.list_id]
+        candidate_tasklists = [tasklist for tasklist in self._engine.shown_tasklists
+                               if tasklist.id != self._engine.selected_task.list_id]
 
         dialog = MoveTaskDialog(self._root, self._theme, candidate_tasklists)
         if dialog.show_dialog():
-            self._last_selected_task.list_id = dialog.result_tasklist.id
-            self._last_selected_task.updated_at = int(datetime.now().timestamp())
-            self._db.upsert_task(self._last_selected_task)
+            self._engine.move_selected_task(dialog.result_tasklist.id)
             self._update_task_treeview()
 
-    def _remove_task_button_clicked(self):
-        if self._last_selected_task is None:
+    def _remove_task_button_clicked(self) -> None:
+        if self._engine.selected_task is None:
             ttk_messagebox.showerror('Error', 'No task is selected.')
             return
 
-        message = 'Really remove {}?'.format(self._last_selected_task.name)
+        message = 'Really remove {}?'.format(self._engine.selected_task.name)
         if ttk_messagebox.askokcancel('Confirm', message):
-            self._db.delete_task(self._last_selected_task.id)
+            self._engine.remove_selected_task()
             self._update_task_treeview()
 
     def _key_pressed(self, event) -> None:
         if event.widget == self._task_name_entry:
             self._task_name_entry_key_pressed(event)
 
-    def _task_name_entry_key_pressed(self, event):
+    def _task_name_entry_key_pressed(self, event) -> None:
         if event.keysym == 'Return':
             self._task_name_entry_entered()
         elif event.keysym == 'Escape':
             self._task_name_entry.delete(0, tk.END)
-            self._task_name_entry.insert(0, self._last_selected_task.name)
+            if self._engine.selected_task:
+                self._task_name_entry.insert(0, self._engine.selected_task.name)
 
     # noinspection PyUnusedLocal
-    def _task_name_entry_focused_out(self, event):
+    def _task_name_entry_focused_out(self, event) -> None:
         self._task_name_entry_entered()
 
-    def _task_name_entry_entered(self):
-        if self._last_selected_task is None:
+    def _task_name_entry_entered(self) -> None:
+        if self._engine.selected_task is None:
             ttk_messagebox.showerror('Error', 'No task is selected.')
             return
 
-        self._last_selected_task.name = self._task_name_entry.get()
-        self._last_selected_task.updated_at = int(datetime.now().timestamp())
-        self._db.upsert_task(self._last_selected_task)
+        self._engine.edit_selected_task_name(self._task_name_entry.get())
         self._update_task_treeview()
 
     # noinspection PyUnusedLocal
-    def _tasklist_treeview_selected(self, event):
-        self._last_selected_task = None
-        self._update_task_treeview()
-
-    # noinspection PyUnusedLocal
-    def _shows_archive_checkbox_changed(self):
-        self._update_task_treeview()
-
-    # noinspection PyUnusedLocal
-    def _task_treeview_selected(self, event):
-        self._update_task_controls()
-
-    def _update_tasklist_treeview(self):
-        self._shown_tasklists = self._db.get_tasklists()
-        self._tasklist_treeview.delete(*self._tasklist_treeview.get_children())
-        item_id_to_select: Optional[str] = None
-        item_id_to_select_is_fixed: bool = False
-        for tasklist in self._shown_tasklists:
-            label = tasklist.name if tasklist.name else 'Empty'
-            item_id = self._tasklist_treeview.insert('', tk.END, iid=tasklist.id, text=label, tags=('undone',))
-            if not item_id_to_select_is_fixed:
-                item_id_to_select = item_id
-                if not self._last_selected_tasklist or self._last_selected_tasklist.sort_key <= tasklist.sort_key:
-                    item_id_to_select_is_fixed = True
-        if item_id_to_select:
-            self._tasklist_treeview.selection_set(item_id_to_select)
-        self._update_task_treeview()
-
-    def _update_task_treeview(self):
-        self._last_selected_tasklist = self._get_selected_tasklist()
-        self._task_treeview.delete(*self._task_treeview.get_children())
-        if self._last_selected_tasklist:
-            archived: Optional[bool] = None
-            if not self._shows_archive_checkbox_value.get():
-                archived = False
-            self._shown_tasks = self._db.get_tasks(list_id=self._last_selected_tasklist.id, archived=archived)
-            item_id_to_select: Optional[str] = None
-            item_id_to_select_is_fixed: bool = False
-            for task in self._shown_tasks:
-                label = task.name if task.name else 'Empty'
-                item_id = self._task_treeview.insert('', tk.END, text=label, values=task.id)
-                if not item_id_to_select_is_fixed:
-                    item_id_to_select = item_id
-                    if not self._last_selected_task or self._last_selected_task.updated_at >= task.updated_at:
-                        item_id_to_select_is_fixed = True
-            if item_id_to_select:
-                self._task_treeview.selection_set(item_id_to_select)
-        else:
-            self._shown_tasks = []
-        self._update_task_controls()
-
-    def _get_selected_tasklist(self) -> Optional[TaskList]:
-        selected_tasklist: Optional[TaskList] = None
+    def _tasklist_treeview_selected(self, event) -> None:
         for tasklist_id in self._tasklist_treeview.selection():
-            selected_tasklist = [t for t in self._shown_tasklists if t.id == tasklist_id][0]
-        return selected_tasklist
+            self._engine.select_tasklist(tasklist_id)
+            break
+        self._update_task_treeview()
+
+    # noinspection PyUnusedLocal
+    def _shows_archive_checkbox_changed(self) -> None:
+        self._engine.shows_archive = self._shows_archive_checkbox_value.get()
+        self._update_task_treeview()
+
+    # noinspection PyUnusedLocal
+    def _task_treeview_selected(self, event) -> None:
+        for task_id in self._task_treeview.selection():
+            self._engine.select_task(task_id)
+            break
+        self._update_task_controls()
+
+    def _update_tasklist_treeview(self) -> None:
+        self._tasklist_treeview.delete(*self._tasklist_treeview.get_children())
+        for tasklist in self._engine.shown_tasklists:
+            label = tasklist.name if tasklist.name else 'Empty'
+            self._tasklist_treeview.insert('', tk.END, iid=tasklist.id, text=label, tags=('undone',))
+        if self._engine.selected_tasklist:
+            self._tasklist_treeview.selection_set(self._engine.selected_tasklist.id)
+        self._update_task_treeview()
+
+    def _update_task_treeview(self) -> None:
+        self._task_treeview.delete(*self._task_treeview.get_children())
+        for task in self._engine.shown_tasks:
+            label = task.name if task.name else 'Empty'
+            self._task_treeview.insert('', tk.END, iid=task.id, text=label, values=task.id)
+        if self._engine.selected_task:
+            self._task_treeview.selection_set(self._engine.selected_task.id)
+        self._update_task_controls()
 
     def _update_task_controls(self) -> None:
-        self._last_selected_task = self._get_selected_task()
         self._task_name_entry.delete(0, tk.END)
         self._task_memo_text.delete(1.0, tk.END)
-        if self._last_selected_task:
+        if self._engine.selected_task:
             self._task_name_entry.config(state=tk.NORMAL)
-            self._task_name_entry.insert(tk.END, self._last_selected_task.name)
+            self._task_name_entry.insert(tk.END, self._engine.selected_task.name)
             self._task_memo_text.config(state=tk.NORMAL)
-            self._task_memo_text.insert(tk.END, self._last_selected_task.name)
+            self._task_memo_text.insert(tk.END, self._engine.selected_task.name)
         else:
             self._task_name_entry.config(state=tk.DISABLED)
             self._task_memo_text.config(state=tk.DISABLED)
 
-    def _get_selected_task(self) -> Optional[Task]:
-        selected_task: Optional[Task] = None
-        for item_id in self._task_treeview.selection():
-            item = self._task_treeview.item(item_id)
-            task_id = item['values'][0]
-            selected_task = [t for t in self._shown_tasks if t.id == task_id][0]
-        return selected_task
-
-    def show(self):
+    def show(self) -> None:
         self._root.mainloop()
