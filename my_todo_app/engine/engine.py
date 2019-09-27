@@ -88,7 +88,7 @@ class TaskEngine:
         self._db.delete_tasklist(self._selected_tasklist.id)
         self._update_shown_tasklists()
 
-    def add_empty_task(self) -> None:
+    def add_task(self, name: Optional[str] = None) -> None:
         if self._selected_tasklist is None:
             raise RuntimeError('No task list is selected')
 
@@ -96,6 +96,8 @@ class TaskEngine:
         parent_id = self._selected_tasklist.id
         timestamp = int(datetime.now().timestamp())
         new_task = Task(id_, parent_id, '', '', '', '', False, False, timestamp, timestamp, 0, 0)
+        if name is not None:
+            new_task.name = name
         if self._shown_tasks:
             sort_key_min = min([t.sort_key for t in self._shown_tasks])
             new_task.sort_key = sort_key_min - 1
@@ -103,20 +105,14 @@ class TaskEngine:
         self._db.upsert_task(self._selected_task)
         self._update_shown_tasks()
 
-    def move_selected_task(self, list_id: str) -> None:
+    def edit_selected_task(self, name: Optional[str] = None, list_id: Optional[str] = None) -> None:
         if self._selected_task is None:
             raise RuntimeError('No task is selected')
 
-        self._selected_task.list_id = list_id
-        self._selected_task.updated_at = int(datetime.now().timestamp())
-        self._db.upsert_task(self._selected_task)
-        self._update_shown_tasks()
-
-    def edit_selected_task_name(self, name: str):
-        if self._selected_task is None:
-            raise RuntimeError('No task is selected')
-
-        self._selected_task.name = name
+        if name is not None:
+            self._selected_task.name = name
+        if list_id is not None:
+            self._selected_task.list_id = list_id
         self._selected_task.updated_at = int(datetime.now().timestamp())
         self._db.upsert_task(self._selected_task)
         self._update_shown_tasks()

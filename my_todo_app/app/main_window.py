@@ -202,7 +202,7 @@ class MainWindow:
             ttk_messagebox.showerror('Error', 'No task list is selected.')
             return
 
-        self._engine.add_empty_task()
+        self._engine.add_task()
         self._update_task_treeview()
         self._task_name_entry.focus_set()
 
@@ -216,7 +216,7 @@ class MainWindow:
 
         dialog = MoveTaskDialog(self._root, self._theme, candidate_tasklists)
         if dialog.show_dialog():
-            self._engine.move_selected_task(dialog.result_tasklist.id)
+            self._engine.edit_selected_task(list_id=dialog.result_tasklist.id)
             self._update_task_treeview()
 
     def _remove_task_button_clicked(self) -> None:
@@ -250,7 +250,7 @@ class MainWindow:
             ttk_messagebox.showerror('Error', 'No task is selected.')
             return
 
-        self._engine.edit_selected_task_name(self._task_name_entry.get())
+        self._engine.edit_selected_task(name=self._task_name_entry.get())
         self._update_task_treeview()
 
     # noinspection PyUnusedLocal
