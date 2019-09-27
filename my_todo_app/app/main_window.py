@@ -29,7 +29,7 @@ class MainWindow:
         self._root.geometry('1024x600')
         self._root.grid_rowconfigure(0, weight=1)
         self._root.grid_columnconfigure(0, weight=0)
-        self._root.grid_columnconfigure(1, weight=1, minsize=300)
+        self._root.grid_columnconfigure(1, weight=1, minsize=380)
         self._root.grid_columnconfigure(2, weight=1)
         self._root.bind('<Any-KeyPress>', self._key_pressed)
 
@@ -112,8 +112,9 @@ class MainWindow:
         down_task_button = tk.Button(center_top_frame, text='Down', width=self._theme.button_width, relief=tk.FLAT)
         down_task_button.grid(row=0, column=3, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        move_task_button = tk.Button(center_top_frame, text='Complete', width=self._theme.button_width, relief=tk.FLAT)
-        move_task_button.grid(row=1, column=0, sticky=tk.E, pady=(self._theme.margin, 0))
+        self._complete_task_button = tk.Button(center_top_frame, text='Complete', width=self._theme.button_width,
+                                               relief=tk.FLAT, command=self._complete_task_button_clicked)
+        self._complete_task_button.grid(row=1, column=0, sticky=tk.E, pady=(self._theme.margin, 0))
 
         move_task_button = tk.Button(center_top_frame, text='Move', width=self._theme.button_width, relief=tk.FLAT,
                                      command=self._move_task_button_clicked)
@@ -127,6 +128,10 @@ class MainWindow:
                                                       command=self._shows_archive_checkbox_changed)
         self._shows_archive_checkbox.grid(row=1, column=2, columnspan=2, sticky=tk.W,
                                           padx=(self._theme.margin, 0), pady=(self._theme.margin, 0))
+
+        self._archive_task_button = tk.Button(center_top_frame, text='Archive', width=self._theme.button_width,
+                                              relief=tk.FLAT, command=self._archive_task_button_clicked)
+        self._archive_task_button.grid(row=0, column=4, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._task_treeview = ttk.Treeview(center_frame, show='tree', style=STYLE_TASK_TREEVIEW)
         self._task_treeview.column('#0', width=300)
@@ -229,6 +234,26 @@ class MainWindow:
             self._engine.remove_selected_task()
             self._update_task_treeview()
 
+    def _complete_task_button_clicked(self) -> None:
+        if self._engine.selected_task is None:
+            ttk_messagebox.showerror('Error', 'No task is selected.')
+            return
+
+        self._engine.edit_selected_task(completed=not self._engine.selected_task.completed)
+        self._update_task_treeview()
+
+    def _archive_task_button_clicked(self) -> None:
+        if self._engine.selected_task is None:
+            ttk_messagebox.showerror('Error', 'No task is selected.')
+            return
+
+        self._engine.edit_selected_task(archived=not self._engine.selected_task.archived)
+        self._update_task_treeview()
+
+    def _shows_archive_checkbox_changed(self) -> None:
+        self._engine.shows_archive = self._shows_archive_checkbox_value.get()
+        self._update_task_treeview()
+
     def _key_pressed(self, event) -> None:
         if event.widget == self._task_name_entry:
             self._task_name_entry_key_pressed(event)
@@ -258,11 +283,6 @@ class MainWindow:
         for tasklist_id in self._tasklist_treeview.selection():
             self._engine.select_tasklist(tasklist_id)
             break
-        self._update_task_treeview()
-
-    # noinspection PyUnusedLocal
-    def _shows_archive_checkbox_changed(self) -> None:
-        self._engine.shows_archive = self._shows_archive_checkbox_value.get()
         self._update_task_treeview()
 
     # noinspection PyUnusedLocal
@@ -301,6 +321,16 @@ class MainWindow:
         else:
             self._task_name_entry.config(state=tk.DISABLED)
             self._task_memo_text.config(state=tk.DISABLED)
+
+        if self._engine.selected_task and self._engine.selected_task.completed:
+            self._complete_task_button.config(text='Uncomplete')
+        else:
+            self._complete_task_button.config(text='Complete')
+
+        if self._engine.selected_task and self._engine.selected_task.archived:
+            self._archive_task_button.config(text='Unarchive')
+        else:
+            self._archive_task_button.config(text='Archive')
 
     def show(self) -> None:
         self._root.mainloop()

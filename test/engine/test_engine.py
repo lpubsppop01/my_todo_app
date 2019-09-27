@@ -136,5 +136,30 @@ class TestTaskEngine(TestCase):
         self.assertEqual('Baz', engine.shown_tasks[0].name)
         self.assertEqual(engine.shown_tasks[1], engine.selected_task)
 
+        engine.select_task(engine.shown_tasks[1].id)
+        datetime_20190927_123000 = datetime(2019, 9, 27, 12, 30, 0)
+        with freeze_time(datetime_20190927_123000):
+            engine.edit_selected_task(completed=True)
+
+        self.assertTrue(engine.shown_tasks[1].completed)
+        self.assertEqual(datetime_20190927_123000.timestamp(), engine.shown_tasks[1].completed_at)
+        self.assertEqual(datetime_20190927_123000.timestamp(), engine.shown_tasks[1].updated_at)
+
+        engine.select_task(engine.shown_tasks[1].id)
+        datetime_20190927_123500 = datetime(2019, 9, 27, 12, 35, 0)
+        with freeze_time(datetime_20190927_123500):
+            engine.edit_selected_task(archived=True)
+
+        self.assertEqual(1, len(engine.shown_tasks))
+        self.assertEqual('Baz', engine.shown_tasks[0].name)
+        self.assertFalse(engine.shown_tasks[0].archived)
+
+        engine.shows_archive = True
+
+        self.assertEqual(2, len(engine.shown_tasks))
+        self.assertEqual('Bar', engine.shown_tasks[1].name)
+        self.assertTrue(engine.shown_tasks[1].archived)
+        self.assertEqual(datetime_20190927_123500.timestamp(), engine.shown_tasks[1].updated_at)
+
         db._conn.close()
         os.remove(db_path)

@@ -105,7 +105,8 @@ class TaskEngine:
         self._db.upsert_task(self._selected_task)
         self._update_shown_tasks()
 
-    def edit_selected_task(self, name: Optional[str] = None, list_id: Optional[str] = None) -> None:
+    def edit_selected_task(self, name: Optional[str] = None, list_id: Optional[str] = None,
+                           completed: Optional[bool] = None, archived: Optional[bool] = None) -> None:
         if self._selected_task is None:
             raise RuntimeError('No task is selected')
 
@@ -113,6 +114,12 @@ class TaskEngine:
             self._selected_task.name = name
         if list_id is not None:
             self._selected_task.list_id = list_id
+        if completed is not None:
+            self._selected_task.completed = completed
+            self._selected_task.completed_at = int(datetime.now().timestamp())
+        if archived is not None:
+            self._selected_task.archived = archived
+            self._selected_task.archived_at = int(datetime.now().timestamp())
         self._selected_task.updated_at = int(datetime.now().timestamp())
         self._db.upsert_task(self._selected_task)
         self._update_shown_tasks()
@@ -147,7 +154,7 @@ class TaskEngine:
             for task in self._shown_tasks:
                 if not task_to_select_is_fixed:
                     task_to_select = task
-                    if not self._selected_task or self._selected_task.updated_at >= task.updated_at:
+                    if not self._selected_task or self._selected_task.sort_key <= task.sort_key:
                         task_to_select_is_fixed = True
             self._selected_task = task_to_select
         else:
