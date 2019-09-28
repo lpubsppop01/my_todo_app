@@ -75,12 +75,14 @@ class MainWindow:
                                            relief=tk.FLAT, command=self._remove_tasklist_button_clicked)
         remove_tasklist_button.grid(row=0, column=2, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        up_tasklist_button = tk.Button(left_top_frame, text='Up', width=self._theme.button_width, relief=tk.FLAT)
-        up_tasklist_button.grid(row=1, column=0, sticky=tk.E, pady=(self._theme.margin, 0))
+        self._up_tasklist_button = tk.Button(left_top_frame, text='Up', width=self._theme.button_width, relief=tk.FLAT,
+                                             command=self._up_tasklist_button_clicked)
+        self._up_tasklist_button.grid(row=1, column=0, sticky=tk.E, pady=(self._theme.margin, 0))
 
-        down_tasklist_button = tk.Button(left_top_frame, text='Down', width=self._theme.button_width, relief=tk.FLAT)
-        down_tasklist_button.grid(row=1, column=1, sticky=tk.E,
-                                  padx=(self._theme.margin, 0), pady=(self._theme.margin, 0))
+        self._down_tasklist_button = tk.Button(left_top_frame, text='Down', width=self._theme.button_width,
+                                               relief=tk.FLAT, command=self._down_tasklist_button_clicked)
+        self._down_tasklist_button.grid(row=1, column=1, sticky=tk.E,
+                                        padx=(self._theme.margin, 0), pady=(self._theme.margin, 0))
 
         self._tasklist_treeview = ttk.Treeview(left_frame, show='tree', style=STYLE_TASKLIST_TREEVIEW)
         self._tasklist_treeview.column('#0', width=200)
@@ -202,6 +204,22 @@ class MainWindow:
             self._engine.remove_selected_tasklist()
             self._update_tasklist_treeview()
 
+    def _up_tasklist_button_clicked(self) -> None:
+        if not self._engine.can_up_selected_tasklist():
+            ttk_messagebox.showerror('Error', 'Unable to up selected task list.')
+            return
+
+        self._engine.up_selected_tasklist()
+        self._update_tasklist_treeview()
+
+    def _down_tasklist_button_clicked(self) -> None:
+        if not self._engine.can_down_selected_tasklist():
+            ttk_messagebox.showerror('Error', 'Unable to down selected task list.')
+            return
+
+        self._engine.down_selected_tasklist()
+        self._update_tasklist_treeview()
+
     def _add_task_button_clicked(self) -> None:
         if self._engine.selected_tasklist is None:
             ttk_messagebox.showerror('Error', 'No task list is selected.')
@@ -283,6 +301,7 @@ class MainWindow:
         for tasklist_id in self._tasklist_treeview.selection():
             self._engine.select_tasklist(tasklist_id)
             break
+        self._update_tasklist_controls()
         self._update_task_treeview()
 
     # noinspection PyUnusedLocal
@@ -299,7 +318,19 @@ class MainWindow:
             self._tasklist_treeview.insert('', tk.END, iid=tasklist.id, text=label, tags=('undone',))
         if self._engine.selected_tasklist:
             self._tasklist_treeview.selection_set(self._engine.selected_tasklist.id)
+        self._update_tasklist_controls()
         self._update_task_treeview()
+
+    def _update_tasklist_controls(self) -> None:
+        if self._engine.can_up_selected_tasklist():
+            self._up_tasklist_button.config(state=tk.NORMAL)
+        else:
+            self._up_tasklist_button.config(state=tk.DISABLED)
+
+        if self._engine.can_down_selected_tasklist():
+            self._down_tasklist_button.config(state=tk.NORMAL)
+        else:
+            self._down_tasklist_button.config(state=tk.DISABLED)
 
     def _update_task_treeview(self) -> None:
         self._task_treeview.delete(*self._task_treeview.get_children())

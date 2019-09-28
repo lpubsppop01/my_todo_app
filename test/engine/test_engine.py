@@ -37,6 +37,62 @@ class TestTaskEngine(TestCase):
         self.assertEqual('Baz', engine.shown_tasklists[3].name)
         self.assertEqual(engine.shown_tasklists[3], engine.selected_tasklist)
         self.assertEqual(None, engine.selected_task)
+        self.assertTrue(engine.can_up_selected_tasklist())
+
+        engine.up_selected_tasklist()
+
+        self.assertEqual('Inbox', engine.shown_tasklists[0].name)
+        self.assertEqual('Foo', engine.shown_tasklists[1].name)
+        self.assertEqual('Baz', engine.shown_tasklists[2].name)
+        self.assertEqual('Bar', engine.shown_tasklists[3].name)
+        self.assertEqual(engine.shown_tasklists[2], engine.selected_tasklist)
+        self.assertTrue(engine.can_up_selected_tasklist())
+
+        engine.up_selected_tasklist()
+
+        self.assertEqual('Inbox', engine.shown_tasklists[0].name)
+        self.assertEqual('Baz', engine.shown_tasklists[1].name)
+        self.assertEqual('Foo', engine.shown_tasklists[2].name)
+        self.assertEqual('Bar', engine.shown_tasklists[3].name)
+        self.assertEqual(engine.shown_tasklists[1], engine.selected_tasklist)
+        self.assertTrue(engine.can_up_selected_tasklist())
+
+        engine.up_selected_tasklist()
+
+        self.assertEqual('Baz', engine.shown_tasklists[0].name)
+        self.assertEqual('Inbox', engine.shown_tasklists[1].name)
+        self.assertEqual('Foo', engine.shown_tasklists[2].name)
+        self.assertEqual('Bar', engine.shown_tasklists[3].name)
+        self.assertEqual(engine.shown_tasklists[0], engine.selected_tasklist)
+        self.assertFalse(engine.can_up_selected_tasklist())
+        self.assertTrue(engine.can_down_selected_tasklist())
+
+        engine.down_selected_tasklist()
+
+        self.assertEqual('Inbox', engine.shown_tasklists[0].name)
+        self.assertEqual('Baz', engine.shown_tasklists[1].name)
+        self.assertEqual('Foo', engine.shown_tasklists[2].name)
+        self.assertEqual('Bar', engine.shown_tasklists[3].name)
+        self.assertEqual(engine.shown_tasklists[1], engine.selected_tasklist)
+        self.assertTrue(engine.can_down_selected_tasklist())
+
+        engine.down_selected_tasklist()
+
+        self.assertEqual('Inbox', engine.shown_tasklists[0].name)
+        self.assertEqual('Foo', engine.shown_tasklists[1].name)
+        self.assertEqual('Baz', engine.shown_tasklists[2].name)
+        self.assertEqual('Bar', engine.shown_tasklists[3].name)
+        self.assertEqual(engine.shown_tasklists[2], engine.selected_tasklist)
+        self.assertTrue(engine.can_down_selected_tasklist())
+
+        engine.down_selected_tasklist()
+
+        self.assertEqual('Inbox', engine.shown_tasklists[0].name)
+        self.assertEqual('Foo', engine.shown_tasklists[1].name)
+        self.assertEqual('Bar', engine.shown_tasklists[2].name)
+        self.assertEqual('Baz', engine.shown_tasklists[3].name)
+        self.assertEqual(engine.shown_tasklists[3], engine.selected_tasklist)
+        self.assertFalse(engine.can_down_selected_tasklist())
 
         engine.select_tasklist(engine.shown_tasklists[1].id)
         engine.edit_selected_tasklist('Next Action')

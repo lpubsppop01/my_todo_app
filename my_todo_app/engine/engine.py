@@ -88,6 +88,50 @@ class TaskEngine:
         self._db.delete_tasklist(self._selected_tasklist.id)
         self._update_shown_tasklists()
 
+    def can_up_selected_tasklist(self) -> bool:
+        if self._selected_tasklist is None:
+            return False
+        if self._selected_tasklist == self._shown_tasklists[0]:
+            return False
+        return True
+
+    def up_selected_tasklist(self) -> None:
+        if self._selected_tasklist is None:
+            raise RuntimeError('No task list is selected')
+        if self._selected_tasklist == self._shown_tasklists[0]:
+            raise RuntimeError('The selected task list is top one')
+
+        selected_index = self._shown_tasklists.index(self._selected_tasklist)
+        if selected_index > 1:
+            self._selected_tasklist.sort_key = (self._shown_tasklists[selected_index - 1].sort_key +
+                                                self._shown_tasklists[selected_index - 2].sort_key) / 2
+        else:
+            self._selected_tasklist.sort_key = self._shown_tasklists[selected_index - 1].sort_key - 1
+        self._db.upsert_tasklist(self._selected_tasklist)
+        self._update_shown_tasklists()
+
+    def can_down_selected_tasklist(self) -> bool:
+        if self._selected_tasklist is None:
+            return False
+        if self._selected_tasklist == self._shown_tasklists[-1]:
+            return False
+        return True
+
+    def down_selected_tasklist(self) -> None:
+        if self._selected_tasklist is None:
+            raise RuntimeError('No task list is selected')
+        if self._selected_tasklist == self._shown_tasklists[-1]:
+            raise RuntimeError('The selected task list is bottom one')
+
+        selected_index = self._shown_tasklists.index(self._selected_tasklist)
+        if selected_index < len(self.shown_tasklists) - 2:
+            self._selected_tasklist.sort_key = (self._shown_tasklists[selected_index + 1].sort_key +
+                                                self._shown_tasklists[selected_index + 2].sort_key) / 2
+        else:
+            self._selected_tasklist.sort_key = self._shown_tasklists[selected_index + 1].sort_key + 1
+        self._db.upsert_tasklist(self._selected_tasklist)
+        self._update_shown_tasklists()
+
     def add_task(self, name: Optional[str] = None) -> None:
         if self._selected_tasklist is None:
             raise RuntimeError('No task list is selected')
