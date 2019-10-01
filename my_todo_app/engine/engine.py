@@ -137,14 +137,37 @@ class TaskEngine:
             raise RuntimeError('No task list is selected')
 
         id_ = str(uuid.uuid4())
-        parent_id = self._selected_tasklist.id
+        list_id = self._selected_tasklist.id
         timestamp = int(datetime.now().timestamp())
-        new_task = Task(id_, parent_id, '', '', '', '', False, False, timestamp, timestamp, 0, 0)
+        new_task = Task(id_, list_id, '', '', '', '', False, False, timestamp, timestamp, 0, 0)
         if name is not None:
             new_task.name = name
         if self._shown_tasks:
             sort_key_min = min([t.sort_key for t in self._shown_tasks])
             new_task.sort_key = sort_key_min - 1
+        self._selected_task = new_task
+        self._db.upsert_task(self._selected_task)
+        self._update_shown_tasks()
+
+    def add_sub_task(self, name: Optional[str] = None) -> None:
+        if self._selected_tasklist is None:
+            raise RuntimeError('No task list is selected')
+        if self._selected_task is None:
+            raise RuntimeError('No task is selected')
+
+        id_ = str(uuid.uuid4())
+        list_id = self._selected_tasklist.id
+        parent_task_id = self.selected_task.id
+        timestamp = int(datetime.now().timestamp())
+        new_task = Task(id_, list_id, parent_task_id, '', '', '', False, False, timestamp, timestamp, 0, 0)
+        if name is not None:
+            new_task.name = name
+        below_tasks = [t for t in self._shown_tasks if t.sort_key > self.selected_task.sort_key]
+        if below_tasks:
+            sort_key_min = min([t.sort_key for t in below_tasks])
+            new_task.sort_key = (self.selected_task.sort_key + sort_key_min) / 2
+        else:
+            new_task.sort_key = self.selected_task.sort_key + 1
         self._selected_task = new_task
         self._db.upsert_task(self._selected_task)
         self._update_shown_tasks()
