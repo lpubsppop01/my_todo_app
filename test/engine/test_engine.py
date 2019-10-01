@@ -13,8 +13,8 @@ from my_todo_app.engine.task_sqlite3 import SQLite3TaskDatabase
 
 class TestTaskEngine(TestCase):
 
-    def test_it_works(self):
-        db_path = os.path.join(os.path.dirname(__file__), 'TestTaskEngine_test_it_works.sqlite3')
+    def test_tasklist_crud(self):
+        db_path = os.path.join(os.path.dirname(__file__), 'TestTaskEngine_test_tasklist_crud.sqlite3')
         if os.path.exists(db_path):
             os.remove(db_path)
         db = SQLite3TaskDatabase(db_path)
@@ -37,6 +37,41 @@ class TestTaskEngine(TestCase):
         self.assertEqual('Baz', engine.shown_tasklists[3].name)
         self.assertEqual(engine.shown_tasklists[3], engine.selected_tasklist)
         self.assertEqual(None, engine.selected_task)
+        self.assertTrue(engine.can_up_selected_tasklist())
+
+        engine.select_tasklist(engine.shown_tasklists[1].id)
+        engine.edit_selected_tasklist(name='Next Action')
+
+        self.assertEqual(engine.shown_tasklists[1], engine.selected_tasklist)
+        self.assertEqual('Next Action', engine.selected_tasklist.name)
+
+        engine.select_tasklist(engine.shown_tasklists[2].id)
+        engine.remove_selected_tasklist()
+
+        self.assertEqual(3, len(engine.shown_tasklists))
+        self.assertEqual(engine.shown_tasklists[2], engine.selected_tasklist)
+        self.assertEqual('Baz', engine.selected_tasklist.name)
+
+        engine.remove_selected_tasklist()
+
+        self.assertEqual(2, len(engine.shown_tasklists))
+        self.assertEqual(engine.shown_tasklists[1], engine.selected_tasklist)
+        self.assertEqual('Next Action', engine.selected_tasklist.name)
+
+        db._conn.close()
+        os.remove(db_path)
+
+    def test_tasklist_up_down(self):
+        db_path = os.path.join(os.path.dirname(__file__), 'TestTaskEngine_test_tasklist_up_down.sqlite3')
+        if os.path.exists(db_path):
+            os.remove(db_path)
+        db = SQLite3TaskDatabase(db_path)
+        engine = TaskEngine(db)
+        engine.add_tasklist('Inbox')
+        engine.add_tasklist('Foo')
+        engine.add_tasklist('Bar')
+        engine.add_tasklist('Baz')
+
         self.assertTrue(engine.can_up_selected_tasklist())
 
         engine.up_selected_tasklist()
@@ -94,24 +129,17 @@ class TestTaskEngine(TestCase):
         self.assertEqual(engine.shown_tasklists[3], engine.selected_tasklist)
         self.assertFalse(engine.can_down_selected_tasklist())
 
-        engine.select_tasklist(engine.shown_tasklists[1].id)
-        engine.edit_selected_tasklist('Next Action')
+        db._conn.close()
+        os.remove(db_path)
 
-        self.assertEqual(engine.shown_tasklists[1], engine.selected_tasklist)
-        self.assertEqual('Next Action', engine.selected_tasklist.name)
-
-        engine.select_tasklist(engine.shown_tasklists[2].id)
-        engine.remove_selected_tasklist()
-
-        self.assertEqual(3, len(engine.shown_tasklists))
-        self.assertEqual(engine.shown_tasklists[2], engine.selected_tasklist)
-        self.assertEqual('Baz', engine.selected_tasklist.name)
-
-        engine.remove_selected_tasklist()
-
-        self.assertEqual(2, len(engine.shown_tasklists))
-        self.assertEqual(engine.shown_tasklists[1], engine.selected_tasklist)
-        self.assertEqual('Next Action', engine.selected_tasklist.name)
+    def test_task_crud(self):
+        db_path = os.path.join(os.path.dirname(__file__), 'TestTaskEngine_test_task_crud.sqlite3')
+        if os.path.exists(db_path):
+            os.remove(db_path)
+        db = SQLite3TaskDatabase(db_path)
+        engine = TaskEngine(db)
+        engine.add_tasklist('Inbox')
+        engine.add_tasklist('Next Action')
 
         engine.select_tasklist(engine.shown_tasklists[0].id)
         datetime_20190927_120000 = datetime(2019, 9, 27, 12, 0, 0)
@@ -218,9 +246,27 @@ class TestTaskEngine(TestCase):
         self.assertTrue(engine.shown_tasks[1].archived)
         self.assertEqual(datetime_20190927_123500.timestamp(), engine.shown_tasks[1].updated_at)
 
+        db._conn.close()
+        os.remove(db_path)
+
+    def test_sub_task_crud(self):
+        db_path = os.path.join(os.path.dirname(__file__), 'TestTaskEngine_test_task_crud.sqlite3')
+        if os.path.exists(db_path):
+            os.remove(db_path)
+        db = SQLite3TaskDatabase(db_path)
+        engine = TaskEngine(db)
+        engine.add_tasklist('Inbox')
+        engine.add_tasklist('Next Action')
+        engine.select_tasklist(engine.shown_tasklists[0].id)
+        with freeze_time(datetime(2019, 9, 27, 12, 0, 0)):
+            engine.add_task(name='Task1')
+        with freeze_time(datetime(2019, 9, 27, 12, 5, 0)):
+            engine.add_task(name='Task2')
+
+        engine.select_task(engine.shown_tasks[0].id)
         datetime_20190927_124000 = datetime(2019, 9, 27, 12, 40, 0)
         with freeze_time(datetime_20190927_124000):
-            engine.add_sub_task('Sub1')
+            engine.add_sub_task(name='Sub1')
 
         self.assertEqual(3, len(engine.shown_tasks))
         self.assertEqual(engine.shown_tasks[1], engine.selected_task)
