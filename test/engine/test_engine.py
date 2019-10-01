@@ -155,9 +155,10 @@ class TestTaskEngine(TestCase):
 
         datetime_20190927_120500 = datetime(2019, 9, 27, 12, 5, 0)
         with freeze_time(datetime_20190927_120500):
-            engine.edit_selected_task(name='Add TaskEngine unit tests')
+            engine.edit_selected_task(name='Add TaskEngine unit tests', memo='Memo')
 
         self.assertEqual('Add TaskEngine unit tests', engine.selected_task.name)
+        self.assertEqual('Memo', engine.selected_task.memo)
         self.assertEqual(datetime_20190927_120500.timestamp(), engine.selected_task.updated_at)
 
         datetime_20190927_121000 = datetime(2019, 9, 27, 12, 10, 0)

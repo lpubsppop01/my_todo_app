@@ -173,6 +173,7 @@ class TaskEngine:
         self._update_shown_tasks()
 
     def edit_selected_task(self, name: Optional[str] = None, list_id: Optional[str] = None,
+                           memo: Optional[str] = None,
                            completed: Optional[bool] = None, archived: Optional[bool] = None) -> None:
         if self._selected_task is None:
             raise RuntimeError('No task is selected')
@@ -181,6 +182,8 @@ class TaskEngine:
             self._selected_task.name = name
         if list_id is not None:
             self._selected_task.list_id = list_id
+        if memo is not None:
+            self.selected_task.memo = memo
         if completed is not None:
             self._selected_task.completed = completed
             self._selected_task.completed_at = int(datetime.now().timestamp())

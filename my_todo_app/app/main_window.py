@@ -275,6 +275,8 @@ class MainWindow:
     def _key_pressed(self, event) -> None:
         if event.widget == self._task_name_entry:
             self._task_name_entry_key_pressed(event)
+        if event.widget == self._task_memo_text:
+            self._task_memo_text_key_pressed(event)
 
     def _task_name_entry_key_pressed(self, event) -> None:
         if event.keysym == 'Return':
@@ -282,7 +284,7 @@ class MainWindow:
         elif event.keysym == 'Escape':
             self._task_name_entry.delete(0, tk.END)
             if self._engine.selected_task:
-                self._task_name_entry.insert(0, self._engine.selected_task.name)
+                self._task_name_entry.insert(tk.END, self._engine.selected_task.name)
 
     # noinspection PyUnusedLocal
     def _task_name_entry_focused_out(self, event) -> None:
@@ -294,6 +296,26 @@ class MainWindow:
             return
 
         self._engine.edit_selected_task(name=self._task_name_entry.get())
+        self._update_task_treeview()
+
+    def _task_memo_text_key_pressed(self, event) -> None:
+        if event.keysym == 'Return':
+            self._task_memo_text_entered()
+        elif event.keysym == 'Escape':
+            self._task_memo_text.delete(1.0, tk.END)
+            if self._engine.selected_task:
+                self._task_memo_text.insert(tk.END, self._engine.selected_task.memo)
+
+    # noinspection PyUnusedLocal
+    def _task_memo_text_focused_out(self, event) -> None:
+        self._task_memo_text_entered()
+
+    def _task_memo_text_entered(self) -> None:
+        if self._engine.selected_task is None:
+            ttk_messagebox.showerror('Error', 'No task is selected.')
+            return
+
+        self._engine.edit_selected_task(memo=self._task_memo_text.get(1.0, tk.END))
         self._update_task_treeview()
 
     # noinspection PyUnusedLocal
@@ -348,7 +370,7 @@ class MainWindow:
             self._task_name_entry.config(state=tk.NORMAL)
             self._task_name_entry.insert(tk.END, self._engine.selected_task.name)
             self._task_memo_text.config(state=tk.NORMAL)
-            self._task_memo_text.insert(tk.END, self._engine.selected_task.name)
+            self._task_memo_text.insert(tk.END, self._engine.selected_task.memo)
         else:
             self._task_name_entry.config(state=tk.DISABLED)
             self._task_memo_text.config(state=tk.DISABLED)
