@@ -7,7 +7,7 @@ from unittest import TestCase
 
 from freezegun import freeze_time
 
-from my_todo_app.engine.engine import TaskEngine
+from my_todo_app.engine.engine import TaskEngine, InsertTo
 from my_todo_app.engine.task_sqlite3 import SQLite3TaskDatabase
 
 
@@ -250,6 +250,57 @@ class TestTaskEngine(TestCase):
         db._conn.close()
         os.remove(db_path)
 
+    def test_task_up_down(self):
+        db_path = os.path.join(os.path.dirname(__file__), 'TestTaskEngine_test_task_up_down.sqlite3')
+        if os.path.exists(db_path):
+            os.remove(db_path)
+        db = SQLite3TaskDatabase(db_path)
+        engine = TaskEngine(db)
+        engine.add_tasklist('Inbox')
+        with freeze_time(datetime(2019, 9, 27, 12, 0, 0)):
+            engine.add_task(name='Task1')
+        with freeze_time(datetime(2019, 9, 27, 12, 5, 0)):
+            engine.add_task(name='Task2', to=InsertTo.LAST_SIBLING)
+        with freeze_time(datetime(2019, 9, 27, 12, 10, 0)):
+            engine.add_task(name='Task3', to=InsertTo.LAST_SIBLING)
+
+        self.assertTrue(engine.can_up_selected_task())
+
+        engine.up_selected_task()
+
+        self.assertEqual('Task1', engine.shown_tasks[0].name)
+        self.assertEqual('Task3', engine.shown_tasks[1].name)
+        self.assertEqual('Task2', engine.shown_tasks[2].name)
+        self.assertEqual(engine.shown_tasks[1], engine.selected_task)
+        self.assertTrue(engine.can_up_selected_task())
+
+        engine.up_selected_task()
+
+        self.assertEqual('Task3', engine.shown_tasks[0].name)
+        self.assertEqual('Task1', engine.shown_tasks[1].name)
+        self.assertEqual('Task2', engine.shown_tasks[2].name)
+        self.assertEqual(engine.shown_tasks[0], engine.selected_task)
+        self.assertFalse(engine.can_up_selected_task())
+
+        engine.down_selected_task()
+
+        self.assertEqual('Task1', engine.shown_tasks[0].name)
+        self.assertEqual('Task3', engine.shown_tasks[1].name)
+        self.assertEqual('Task2', engine.shown_tasks[2].name)
+        self.assertEqual(engine.shown_tasks[1], engine.selected_task)
+        self.assertTrue(engine.can_down_selected_task())
+
+        engine.down_selected_task()
+
+        self.assertEqual('Task1', engine.shown_tasks[0].name)
+        self.assertEqual('Task2', engine.shown_tasks[1].name)
+        self.assertEqual('Task3', engine.shown_tasks[2].name)
+        self.assertEqual(engine.shown_tasks[2], engine.selected_task)
+        self.assertFalse(engine.can_down_selected_task())
+
+        db._conn.close()
+        os.remove(db_path)
+
     def test_sub_task_crud(self):
         db_path = os.path.join(os.path.dirname(__file__), 'TestTaskEngine_test_task_crud.sqlite3')
         if os.path.exists(db_path):
@@ -262,12 +313,12 @@ class TestTaskEngine(TestCase):
         with freeze_time(datetime(2019, 9, 27, 12, 0, 0)):
             engine.add_task(name='Task1')
         with freeze_time(datetime(2019, 9, 27, 12, 5, 0)):
-            engine.add_task(name='Task2')
+            engine.add_task(name='Task2', to=InsertTo.LAST_SIBLING)
 
         engine.select_task(engine.shown_tasks[0].id)
         datetime_20190927_124000 = datetime(2019, 9, 27, 12, 40, 0)
         with freeze_time(datetime_20190927_124000):
-            engine.add_sub_task(name='Sub1')
+            engine.add_task(name='Sub1', to=InsertTo.LAST_CHILD)
 
         self.assertEqual(3, len(engine.shown_tasks))
         self.assertEqual(engine.shown_tasks[1], engine.selected_task)
@@ -277,3 +328,5 @@ class TestTaskEngine(TestCase):
 
         db._conn.close()
         os.remove(db_path)
+
+    # todo: test_sub_task_up_down

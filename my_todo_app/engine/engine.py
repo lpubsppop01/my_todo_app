@@ -7,9 +7,17 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from enum import Enum
 from typing import *
 
 from my_todo_app.engine.task import TaskList, Task, TaskDatabase
+
+
+class InsertTo(Enum):
+    FIRST_SIBLING = 0
+    LAST_SIBLING = 1
+    FIRST_CHILD = 2
+    LAST_CHILD = 3
 
 
 class TaskEngine:
@@ -132,7 +140,7 @@ class TaskEngine:
         self._db.upsert_tasklist(self._selected_tasklist)
         self._update_shown_tasklists()
 
-    def add_task(self, name: Optional[str] = None) -> None:
+    def add_task(self, name: Optional[str] = None, to: InsertTo = InsertTo.FIRST_SIBLING) -> None:
         if self._selected_tasklist is None:
             raise RuntimeError('No task list is selected')
 
@@ -142,32 +150,44 @@ class TaskEngine:
         new_task = Task(id_, list_id, '', '', '', '', False, False, timestamp, timestamp, 0, 0)
         if name is not None:
             new_task.name = name
+
+        if self._selected_task:
+            if to == InsertTo.FIRST_CHILD or to == InsertTo.LAST_CHILD:
+                new_task.parent_task_id = self._selected_task.id
+
         if self._shown_tasks:
-            sort_key_min = min([t.sort_key for t in self._shown_tasks])
-            new_task.sort_key = sort_key_min - 1
-        self._selected_task = new_task
-        self._db.upsert_task(self._selected_task)
-        self._update_shown_tasks()
+            if to == InsertTo.FIRST_SIBLING:
+                next_sort_key = min([t.sort_key for t in self._shown_tasks])
+                new_task.sort_key = next_sort_key - 1
+            elif to == InsertTo.LAST_SIBLING:
+                prev_sort_key = max([t.sort_key for t in self._shown_tasks])
+                new_task.sort_key = prev_sort_key + 1
+            elif to == InsertTo.FIRST_CHILD:
+                prev_sort_key = self.selected_task.sort_key
+                following_tasks = [t for t in self._shown_tasks if t.sort_key > self.selected_task.sort_key]
+                if following_tasks:
+                    next_sort_key = min([t.sort_key for t in following_tasks])
+                    new_task.sort_key = (prev_sort_key + next_sort_key) / 2
+                else:
+                    new_task.sort_key = prev_sort_key + 1
+            elif to == InsertTo.LAST_CHILD:
+                following_tasks = [t for t in self._shown_tasks if t.sort_key > self.selected_task.sort_key]
+                if following_tasks:
+                    child_tasks = [t for t in following_tasks if t.parent_task_id == self.selected_task.id]
+                    if child_tasks:
+                        prev_sort_key = max([t.sort_key for t in child_tasks])
+                    else:
+                        prev_sort_key = self.selected_task.sort_key
+                    below_tasks_wo_child = [t for t in following_tasks if t.parent_task_id != self.selected_task.id]
+                    if below_tasks_wo_child:
+                        next_sort_key = min([t.sort_key for t in below_tasks_wo_child])
+                        new_task.sort_key = (prev_sort_key + next_sort_key) / 2
+                    else:
+                        new_task.sort_key = prev_sort_key + 1
+                else:
+                    prev_sort_key = self.selected_task.sort_key
+                    new_task.sort_key = prev_sort_key + 1
 
-    def add_sub_task(self, name: Optional[str] = None) -> None:
-        if self._selected_tasklist is None:
-            raise RuntimeError('No task list is selected')
-        if self._selected_task is None:
-            raise RuntimeError('No task is selected')
-
-        id_ = str(uuid.uuid4())
-        list_id = self._selected_tasklist.id
-        parent_task_id = self.selected_task.id
-        timestamp = int(datetime.now().timestamp())
-        new_task = Task(id_, list_id, parent_task_id, '', '', '', False, False, timestamp, timestamp, 0, 0)
-        if name is not None:
-            new_task.name = name
-        below_tasks = [t for t in self._shown_tasks if t.sort_key > self.selected_task.sort_key]
-        if below_tasks:
-            sort_key_min = min([t.sort_key for t in below_tasks])
-            new_task.sort_key = (self.selected_task.sort_key + sort_key_min) / 2
-        else:
-            new_task.sort_key = self.selected_task.sort_key + 1
         self._selected_task = new_task
         self._db.upsert_task(self._selected_task)
         self._update_shown_tasks()
@@ -200,6 +220,72 @@ class TaskEngine:
 
         self._db.delete_task(self._selected_task.id)
         self._update_shown_tasks()
+
+    def can_up_selected_task(self) -> bool:
+        if self._selected_task is None:
+            return False
+        first_index = self._get_first_sibling_task_index()
+        if self._selected_task == self._shown_tasks[first_index]:
+            return False
+        return True
+
+    def up_selected_task(self) -> None:
+        if self._selected_task is None:
+            raise RuntimeError('No task is selected')
+        first_index = self._get_first_sibling_task_index()
+        if self._selected_task == self._shown_tasks[first_index]:
+            raise RuntimeError('The selected task is bottom one')
+
+        selected_index = self._shown_tasks.index(self._selected_task)
+        if selected_index > 1:
+            self._selected_task.sort_key = (self._shown_tasks[selected_index - 1].sort_key +
+                                            self._shown_tasks[selected_index - 2].sort_key) / 2
+        else:
+            self._selected_task.sort_key = self._shown_tasks[selected_index - 1].sort_key - 1
+        self._db.upsert_task(self._selected_task)
+        self._update_shown_tasks()
+
+    def can_down_selected_task(self) -> bool:
+        if self._selected_task is None:
+            return False
+        last_index = self._get_last_sibling_task_index()
+        if self._selected_task == self._shown_tasks[last_index]:
+            return False
+        return True
+
+    def down_selected_task(self) -> None:
+        if self._selected_task is None:
+            raise RuntimeError('No task is selected')
+        last_index = self._get_last_sibling_task_index()
+        if self._selected_task == self._shown_tasks[last_index]:
+            raise RuntimeError('The selected task is top one')
+
+        selected_index = self._shown_tasks.index(self._selected_task)
+        if selected_index < len(self.shown_tasks) - 2:
+            self._selected_task.sort_key = (self._shown_tasks[selected_index + 1].sort_key +
+                                            self._shown_tasks[selected_index + 2].sort_key) / 2
+        else:
+            self._selected_task.sort_key = self._shown_tasks[selected_index + 1].sort_key + 1
+        self._db.upsert_task(self._selected_task)
+        self._update_shown_tasks()
+
+    def _get_first_sibling_task_index(self):
+        first_index = 0
+        if self._selected_task.parent_task_id:
+            for i in range(0, len(self._shown_tasks)):
+                if self._shown_tasks[i].parent_task_id == self._selected_task.parent_task_id:
+                    first_index = i
+                    break
+        return first_index
+
+    def _get_last_sibling_task_index(self):
+        last_index = len(self._shown_tasks) - 1
+        if self._selected_task.parent_task_id:
+            for i in range(len(self._shown_tasks) - 1, -1, -1):
+                if self._shown_tasks[i].parent_task_id == self._selected_task.parent_task_id:
+                    last_index = i
+                    break
+        return last_index
 
     def _update_shown_tasklists(self):
         self._shown_tasklists = self._db.get_tasklists()
