@@ -11,7 +11,7 @@ from tkinter import ttk
 from my_todo_app.app.movetask_dialog import MoveTaskDialog
 from my_todo_app.app.tasklist_dialog import AddOrEditTaskListDialog
 from my_todo_app.app.theme import Theme
-from my_todo_app.engine.engine import TaskEngine
+from my_todo_app.engine.engine import TaskEngine, InsertTo
 from my_todo_app.engine.task import TaskDatabase
 
 
@@ -104,23 +104,35 @@ class MainWindow:
                                     command=self._add_task_button_clicked)
         add_task_button.grid(row=0, column=0, sticky=tk.E)
 
+        add_child_task_button = tk.Button(center_top_frame, text='Add Child', width=self._theme.button_width,
+                                          relief=tk.FLAT, command=self._add_child_task_button_clicked)
+        add_child_task_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
+
         remove_task_button = tk.Button(center_top_frame, text='Remove', width=self._theme.button_width, relief=tk.FLAT,
                                        command=self._remove_task_button_clicked)
-        remove_task_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
-
-        up_task_button = tk.Button(center_top_frame, text='Up', width=self._theme.button_width, relief=tk.FLAT)
-        up_task_button.grid(row=0, column=2, sticky=tk.E, padx=(self._theme.margin, 0))
-
-        down_task_button = tk.Button(center_top_frame, text='Down', width=self._theme.button_width, relief=tk.FLAT)
-        down_task_button.grid(row=0, column=3, sticky=tk.E, padx=(self._theme.margin, 0))
+        remove_task_button.grid(row=0, column=2, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._complete_task_button = tk.Button(center_top_frame, text='Complete', width=self._theme.button_width,
                                                relief=tk.FLAT, command=self._complete_task_button_clicked)
-        self._complete_task_button.grid(row=1, column=0, sticky=tk.E, pady=(self._theme.margin, 0))
+        self._complete_task_button.grid(row=0, column=3, sticky=tk.E, padx=(self._theme.margin, 0))
 
         move_task_button = tk.Button(center_top_frame, text='Move', width=self._theme.button_width, relief=tk.FLAT,
                                      command=self._move_task_button_clicked)
-        move_task_button.grid(row=1, column=1, sticky=tk.E, padx=(self._theme.margin, 0), pady=(self._theme.margin, 0))
+        move_task_button.grid(row=0, column=4, sticky=tk.E, padx=(self._theme.margin, 0))
+
+        self._up_task_button = tk.Button(center_top_frame, text='Up', width=self._theme.button_width, relief=tk.FLAT,
+                                         command=self._up_task_button_clicked)
+        self._up_task_button.grid(row=1, column=0, sticky=tk.E, pady=(self._theme.margin, 0))
+
+        self._down_task_button = tk.Button(center_top_frame, text='Down', width=self._theme.button_width,
+                                           relief=tk.FLAT, command=self._down_task_button_clicked)
+        self._down_task_button.grid(row=1, column=1, sticky=tk.E,
+                                    padx=(self._theme.margin, 0), pady=(self._theme.margin, 0))
+
+        self._archive_task_button = tk.Button(center_top_frame, text='Archive', width=self._theme.button_width,
+                                              relief=tk.FLAT, command=self._archive_task_button_clicked)
+        self._archive_task_button.grid(row=1, column=2, sticky=tk.E,
+                                       padx=(self._theme.margin, 0), pady=(self._theme.margin, 0))
 
         self._shows_archive_checkbox_value = tk.BooleanVar()
         self._shows_archive_checkbox = tk.Checkbutton(center_top_frame, text='Show Archive',
@@ -128,12 +140,8 @@ class MainWindow:
                                                       variable=self._shows_archive_checkbox_value,
                                                       background=self._theme.main_background,
                                                       command=self._shows_archive_checkbox_changed)
-        self._shows_archive_checkbox.grid(row=1, column=2, columnspan=2, sticky=tk.W,
+        self._shows_archive_checkbox.grid(row=1, column=3, columnspan=2, sticky=tk.W,
                                           padx=(self._theme.margin, 0), pady=(self._theme.margin, 0))
-
-        self._archive_task_button = tk.Button(center_top_frame, text='Archive', width=self._theme.button_width,
-                                              relief=tk.FLAT, command=self._archive_task_button_clicked)
-        self._archive_task_button.grid(row=0, column=4, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._task_treeview = ttk.Treeview(center_frame, show='tree', style=STYLE_TASK_TREEVIEW)
         self._task_treeview.column('#0', width=300)
@@ -229,6 +237,15 @@ class MainWindow:
         self._update_task_treeview()
         self._task_name_entry.focus_set()
 
+    def _add_child_task_button_clicked(self) -> None:
+        if self._engine.selected_task is None:
+            ttk_messagebox.showerror('Error', 'No task is selected.')
+            return
+
+        self._engine.add_task(to=InsertTo.LAST_CHILD)
+        self._update_task_treeview()
+        self._task_name_entry.focus_set()
+
     def _move_task_button_clicked(self) -> None:
         if self._engine.selected_task is None:
             ttk_messagebox.showerror('Error', 'No task is selected.')
@@ -258,6 +275,22 @@ class MainWindow:
             return
 
         self._engine.edit_selected_task(completed=not self._engine.selected_task.completed)
+        self._update_task_treeview()
+
+    def _up_task_button_clicked(self) -> None:
+        if not self._engine.can_up_selected_task():
+            ttk_messagebox.showerror('Error', 'Unable to up selected task.')
+            return
+
+        self._engine.up_selected_task()
+        self._update_task_treeview()
+
+    def _down_task_button_clicked(self) -> None:
+        if not self._engine.can_down_selected_task():
+            ttk_messagebox.showerror('Error', 'Unable to down selected task.')
+            return
+
+        self._engine.down_selected_task()
         self._update_task_treeview()
 
     def _archive_task_button_clicked(self) -> None:
@@ -379,6 +412,16 @@ class MainWindow:
             self._complete_task_button.config(text='Uncomplete')
         else:
             self._complete_task_button.config(text='Complete')
+
+        if self._engine.can_up_selected_task():
+            self._up_task_button.config(state=tk.NORMAL)
+        else:
+            self._up_task_button.config(state=tk.DISABLED)
+
+        if self._engine.can_down_selected_task():
+            self._down_task_button.config(state=tk.NORMAL)
+        else:
+            self._down_task_button.config(state=tk.DISABLED)
 
         if self._engine.selected_task and self._engine.selected_task.archived:
             self._archive_task_button.config(text='Unarchive')
