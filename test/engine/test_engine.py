@@ -2,6 +2,7 @@
 # -*- coding: utf-8-unix -*-
 
 import os
+import sys
 from datetime import datetime
 from unittest import TestCase
 
@@ -14,7 +15,9 @@ from my_todo_app.engine.task_sqlite3 import SQLite3TaskDatabase
 class TestTaskEngine(TestCase):
 
     def test_tasklist_crud(self):
-        db_path = os.path.join(os.path.dirname(__file__), 'TestTaskEngine_test_tasklist_crud.sqlite3')
+        class_name = self.__class__.__name__
+        func_name = sys._getframe().f_code.co_name
+        db_path = os.path.join(os.path.dirname(__file__), '{}_{}.sqlite3'.format(class_name, func_name))
         if os.path.exists(db_path):
             os.remove(db_path)
         db = SQLite3TaskDatabase(db_path)
@@ -62,7 +65,9 @@ class TestTaskEngine(TestCase):
         os.remove(db_path)
 
     def test_tasklist_up_down(self):
-        db_path = os.path.join(os.path.dirname(__file__), 'TestTaskEngine_test_tasklist_up_down.sqlite3')
+        class_name = self.__class__.__name__
+        func_name = sys._getframe().f_code.co_name
+        db_path = os.path.join(os.path.dirname(__file__), '{}_{}.sqlite3'.format(class_name, func_name))
         if os.path.exists(db_path):
             os.remove(db_path)
         db = SQLite3TaskDatabase(db_path)
@@ -133,7 +138,9 @@ class TestTaskEngine(TestCase):
         os.remove(db_path)
 
     def test_task_crud(self):
-        db_path = os.path.join(os.path.dirname(__file__), 'TestTaskEngine_test_task_crud.sqlite3')
+        class_name = self.__class__.__name__
+        func_name = sys._getframe().f_code.co_name
+        db_path = os.path.join(os.path.dirname(__file__), '{}_{}.sqlite3'.format(class_name, func_name))
         if os.path.exists(db_path):
             os.remove(db_path)
         db = SQLite3TaskDatabase(db_path)
@@ -251,7 +258,9 @@ class TestTaskEngine(TestCase):
         os.remove(db_path)
 
     def test_task_up_down(self):
-        db_path = os.path.join(os.path.dirname(__file__), 'TestTaskEngine_test_task_up_down.sqlite3')
+        class_name = self.__class__.__name__
+        func_name = sys._getframe().f_code.co_name
+        db_path = os.path.join(os.path.dirname(__file__), '{}_{}.sqlite3'.format(class_name, func_name))
         if os.path.exists(db_path):
             os.remove(db_path)
         db = SQLite3TaskDatabase(db_path)
@@ -302,14 +311,14 @@ class TestTaskEngine(TestCase):
         os.remove(db_path)
 
     def test_sub_task_crud(self):
-        db_path = os.path.join(os.path.dirname(__file__), 'TestTaskEngine_test_task_crud.sqlite3')
+        class_name = self.__class__.__name__
+        func_name = sys._getframe().f_code.co_name
+        db_path = os.path.join(os.path.dirname(__file__), '{}_{}.sqlite3'.format(class_name, func_name))
         if os.path.exists(db_path):
             os.remove(db_path)
         db = SQLite3TaskDatabase(db_path)
         engine = TaskEngine(db)
         engine.add_tasklist('Inbox')
-        engine.add_tasklist('Next Action')
-        engine.select_tasklist(engine.shown_tasklists[0].id)
         with freeze_time(datetime(2019, 9, 27, 12, 0, 0)):
             engine.add_task(name='Task1')
         with freeze_time(datetime(2019, 9, 27, 12, 5, 0)):
@@ -329,4 +338,61 @@ class TestTaskEngine(TestCase):
         db._conn.close()
         os.remove(db_path)
 
-    # todo: test_sub_task_up_down
+    def test_sub_task_up_down(self):
+        class_name = self.__class__.__name__
+        func_name = sys._getframe().f_code.co_name
+        db_path = os.path.join(os.path.dirname(__file__), '{}_{}.sqlite3'.format(class_name, func_name))
+        if os.path.exists(db_path):
+            os.remove(db_path)
+        db = SQLite3TaskDatabase(db_path)
+        engine = TaskEngine(db)
+        engine.add_tasklist('Inbox')
+        with freeze_time(datetime(2019, 9, 27, 12, 0, 0)):
+            engine.add_task(name='Task1')
+        with freeze_time(datetime(2019, 9, 27, 12, 5, 0)):
+            engine.add_task(name='Task2', to=InsertTo.LAST_SIBLING)
+        engine.select_task(engine.shown_tasks[0].id)
+        with freeze_time(datetime(2019, 9, 27, 12, 10, 0)):
+            engine.add_task(name='Sub1', to=InsertTo.LAST_CHILD)
+        with freeze_time(datetime(2019, 9, 27, 12, 15, 0)):
+            engine.add_task(name='Sub2', to=InsertTo.LAST_SIBLING)
+        with freeze_time(datetime(2019, 9, 27, 12, 20, 0)):
+            engine.add_task(name='Sub3', to=InsertTo.LAST_SIBLING)
+        engine.select_task(engine.shown_tasks[3].id)
+
+        self.assertTrue(engine.can_up_selected_task())
+
+        engine.up_selected_task()
+
+        self.assertEqual('Sub1', engine.shown_tasks[1].name)
+        self.assertEqual('Sub3', engine.shown_tasks[2].name)
+        self.assertEqual('Sub2', engine.shown_tasks[3].name)
+        self.assertEqual(engine.shown_tasks[2], engine.selected_task)
+        self.assertTrue(engine.can_up_selected_task())
+
+        engine.up_selected_task()
+
+        self.assertEqual('Sub3', engine.shown_tasks[1].name)
+        self.assertEqual('Sub1', engine.shown_tasks[2].name)
+        self.assertEqual('Sub2', engine.shown_tasks[3].name)
+        self.assertEqual(engine.shown_tasks[1], engine.selected_task)
+        self.assertFalse(engine.can_up_selected_task())
+
+        engine.down_selected_task()
+
+        self.assertEqual('Sub1', engine.shown_tasks[1].name)
+        self.assertEqual('Sub3', engine.shown_tasks[2].name)
+        self.assertEqual('Sub2', engine.shown_tasks[3].name)
+        self.assertEqual(engine.shown_tasks[2], engine.selected_task)
+        self.assertTrue(engine.can_down_selected_task())
+
+        engine.down_selected_task()
+
+        self.assertEqual('Sub1', engine.shown_tasks[1].name)
+        self.assertEqual('Sub2', engine.shown_tasks[2].name)
+        self.assertEqual('Sub3', engine.shown_tasks[3].name)
+        self.assertEqual(engine.shown_tasks[3], engine.selected_task)
+        self.assertFalse(engine.can_down_selected_task())
+
+        db._conn.close()
+        os.remove(db_path)

@@ -152,41 +152,47 @@ class TaskEngine:
             new_task.name = name
 
         if self._selected_task:
-            if to == InsertTo.FIRST_CHILD or to == InsertTo.LAST_CHILD:
+            if to == InsertTo.FIRST_SIBLING or to == InsertTo.LAST_SIBLING:
+                new_task.parent_task_id = self._selected_task.parent_task_id
+            elif to == InsertTo.FIRST_CHILD or to == InsertTo.LAST_CHILD:
                 new_task.parent_task_id = self._selected_task.id
 
-        if self._shown_tasks:
-            if to == InsertTo.FIRST_SIBLING:
-                next_sort_key = min([t.sort_key for t in self._shown_tasks])
-                new_task.sort_key = next_sort_key - 1
-            elif to == InsertTo.LAST_SIBLING:
-                prev_sort_key = max([t.sort_key for t in self._shown_tasks])
-                new_task.sort_key = prev_sort_key + 1
-            elif to == InsertTo.FIRST_CHILD:
-                prev_sort_key = self.selected_task.sort_key
-                following_tasks = [t for t in self._shown_tasks if t.sort_key > self.selected_task.sort_key]
-                if following_tasks:
-                    next_sort_key = min([t.sort_key for t in following_tasks])
-                    new_task.sort_key = (prev_sort_key + next_sort_key) / 2
+        self_task = self._selected_task if self._selected_task is not None else self._db.get_first_task()
+        if self_task is None:
+            pass
+        elif to == InsertTo.FIRST_SIBLING:
+            first_sibling = self._db.get_first_task(parent_task_id=self_task.parent_task_id)
+            prev_of_that = self._db.get_last_task(sort_key_before=first_sibling.sort_key)
+            if prev_of_that is not None:
+                new_task.sort_key = (prev_of_that.sort_key + first_sibling.sort_key) / 2
+            else:
+                new_task.sort_key = first_sibling.sort_key - 1
+        elif to == InsertTo.LAST_SIBLING:
+            last_sibling = self._db.get_last_task(parent_task_id=self_task.parent_task_id)
+            next_of_that = self._db.get_first_task(sort_key_after=last_sibling.sort_key)
+            if next_of_that is not None:
+                new_task.sort_key = (last_sibling.sort_key + next_of_that.sort_key) / 2
+            else:
+                new_task.sort_key = last_sibling.sort_key + 1
+        elif to == InsertTo.FIRST_CHILD:
+            next_of_selected = self._db.get_first_task(sort_key_after=self_task.sort_key)
+            if next_of_selected is not None:
+                new_task.sort_key = (self_task.sort_key + next_of_selected.sort_key) / 2
+            else:
+                new_task.sort_key = self_task.sort_key + 1
+        elif to == InsertTo.LAST_CHILD:
+            next_sibling = self._db.get_first_task(parent_task_id=self_task.parent_task_id,
+                                                   sort_key_after=self_task.sort_key)
+            last_child = self._db.get_last_task(parent_task_id=self_task.id)
+            if next_sibling is not None:
+                if last_child is not None:
+                    new_task.sort_key = (last_child.sort_key + next_sibling.sort_key) / 2
                 else:
-                    new_task.sort_key = prev_sort_key + 1
-            elif to == InsertTo.LAST_CHILD:
-                following_tasks = [t for t in self._shown_tasks if t.sort_key > self.selected_task.sort_key]
-                if following_tasks:
-                    child_tasks = [t for t in following_tasks if t.parent_task_id == self.selected_task.id]
-                    if child_tasks:
-                        prev_sort_key = max([t.sort_key for t in child_tasks])
-                    else:
-                        prev_sort_key = self.selected_task.sort_key
-                    below_tasks_wo_child = [t for t in following_tasks if t.parent_task_id != self.selected_task.id]
-                    if below_tasks_wo_child:
-                        next_sort_key = min([t.sort_key for t in below_tasks_wo_child])
-                        new_task.sort_key = (prev_sort_key + next_sort_key) / 2
-                    else:
-                        new_task.sort_key = prev_sort_key + 1
-                else:
-                    prev_sort_key = self.selected_task.sort_key
-                    new_task.sort_key = prev_sort_key + 1
+                    new_task.sort_key = (self_task.sort_key + next_sibling.sort_key) / 2
+            elif last_child is not None:
+                new_task.sort_key = last_child.sort_key + 1
+            else:
+                new_task.sort_key = self_task.sort_key + 1
 
         self._selected_task = new_task
         self._db.upsert_task(self._selected_task)

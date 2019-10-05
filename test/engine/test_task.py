@@ -3,6 +3,7 @@
 
 import copy
 import os
+import sys
 import uuid
 from unittest import TestCase
 
@@ -13,7 +14,9 @@ from my_todo_app.engine.task_sqlite3 import SQLite3TaskDatabase
 class TestTaskDatabase(TestCase):
 
     def test_crud(self):
-        db_path = os.path.join(os.path.dirname(__file__), 'TestTaskDatabase_test_crud.sqlite3')
+        class_name = self.__class__.__name__
+        func_name = sys._getframe().f_code.co_name
+        db_path = os.path.join(os.path.dirname(__file__), '{}_{}.sqlite3'.format(class_name, func_name))
         if os.path.exists(db_path):
             os.remove(db_path)
         db = SQLite3TaskDatabase(db_path)
@@ -143,7 +146,9 @@ class TestTaskDatabase(TestCase):
         self.assertFalse(task.equals(sort_key_changed))
 
     def test_get_first_last(self):
-        db_path = os.path.join(os.path.dirname(__file__), 'TestTaskDatabase_test_get_first_last.sqlite3')
+        class_name = self.__class__.__name__
+        func_name = sys._getframe().f_code.co_name
+        db_path = os.path.join(os.path.dirname(__file__), '{}_{}.sqlite3'.format(class_name, func_name))
         if os.path.exists(db_path):
             os.remove(db_path)
         db = SQLite3TaskDatabase(db_path)
