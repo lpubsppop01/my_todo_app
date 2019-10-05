@@ -34,6 +34,7 @@ class Theme:
     # noinspection PyMethodMayBeStatic
     def configure(self, style: ttk.Style) -> None:
         style.theme_use('default')
+        style.configure('.', indicatorsize='0')  # Hide treeview indicator
 
     def configure_accent_treeview(self, style: ttk.Style, key: str, font: Tuple[str, int, str]) -> None:
         style.configure(key,

@@ -391,7 +391,7 @@ class MainWindow:
         self._task_treeview.delete(*self._task_treeview.get_children())
         for task in self._engine.shown_tasks:
             label = task.name if task.name else 'Empty'
-            self._task_treeview.insert('', tk.END, iid=task.id, text=label, values=task.id)
+            self._task_treeview.insert(task.parent_task_id, tk.END, iid=task.id, text=label, values=task.id, open=True)
         if self._engine.selected_task:
             self._task_treeview.selection_set(self._engine.selected_task.id)
         self._update_task_controls()
