@@ -18,8 +18,6 @@ class Theme:
         self._small_fontsize = 9
         self._normal_fontsize = 12
         self._large_fontsize = 18
-        self._name_font = 'Arial 21'
-        self._memo_font = 'Arial 15'
         self._accent_background = 'maroon'
         self._accent_background_selected = 'brown'
         self._accent_foreground = 'white'
