@@ -14,7 +14,7 @@ class Theme:
     def __init__(self):
         self._margin = 8
         self._button_width = 8
-        self._fontfamily = 'Arial'
+        self.fontfamily = 'Arial'
         self._small_fontsize = 9
         self._normal_fontsize = 12
         self._large_fontsize = 18
@@ -68,19 +68,19 @@ class Theme:
 
     @property
     def small_font(self) -> Tuple[str, int, str]:
-        return self._fontfamily, self._normal_fontsize, ''
+        return self.fontfamily, self._normal_fontsize, ''
 
     @property
     def normal_font(self) -> Tuple[str, int, str]:
-        return self._fontfamily, self._normal_fontsize, ''
+        return self.fontfamily, self._normal_fontsize, ''
 
     @property
     def normal_completed_font(self) -> Tuple[str, int, str]:
-        return self._fontfamily, self._normal_fontsize, 'overstrike'
+        return self.fontfamily, self._normal_fontsize, 'overstrike'
 
     @property
     def large_font(self) -> Tuple[str, int, str]:
-        return self._fontfamily, self._large_fontsize, ''
+        return self.fontfamily, self._large_fontsize, ''
 
     @property
     def margin(self) -> int:

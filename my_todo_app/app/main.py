@@ -7,6 +7,7 @@ import os
 import uuid
 from datetime import datetime
 
+from my_todo_app.app.config import Config
 from my_todo_app.app.main_window import MainWindow
 from my_todo_app.engine.task import TaskList, TaskDatabase, Task
 from my_todo_app.engine.task_sqlite3 import SQLite3TaskDatabase
@@ -16,7 +17,14 @@ def get_db_path():
     appdata = os.getenv('APPDATA')
     if appdata is not None:
         return os.path.join(appdata, 'lpubsppop01', 'my_todo', 'db.sqlite3')
-    return '~/.lpubsppop01/my_todo'
+    return '~/.lpubsppop01/my_todo/db.sqlite3'
+
+
+def get_config_path():
+    appdata = os.getenv('APPDATA')
+    if appdata is not None:
+        return os.path.join(appdata, 'lpubsppop01', 'my_todo', 'config.json')
+    return '~/.lpubsppop01/my_todo/config.json'
 
 
 def insert_sample_if_empty(db: TaskDatabase):
@@ -34,7 +42,8 @@ def main():
     db_path = get_db_path()
     db = SQLite3TaskDatabase(db_path)
     insert_sample_if_empty(db)
-    window = MainWindow(db)
+    config = Config(get_config_path())
+    window = MainWindow(db, config)
     window.show()
     db.close()
 

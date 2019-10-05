@@ -9,6 +9,7 @@ import tkinter.scrolledtext as tk_scrolledtext
 from tkinter import ttk
 from typing import *
 
+from my_todo_app.app.config import Config
 from my_todo_app.app.movetask_dialog import MoveTaskDialog
 from my_todo_app.app.tasklist_dialog import AddOrEditTaskListDialog
 from my_todo_app.app.theme import Theme
@@ -19,20 +20,24 @@ from my_todo_app.engine.task import TaskDatabase
 class MainWindow:
     """A main window."""
 
-    def __init__(self, db: TaskDatabase) -> None:
+    def __init__(self, db: TaskDatabase, config: Config) -> None:
         self._engine: TaskEngine = TaskEngine(db)
+        self._config: Config = config
         self._layout()
         self._update_tasklist_treeview()
 
     def _layout(self) -> None:
         self._root = tk.Tk()
         self._root.title('My Todo')
-        self._root.geometry('1024x600')
+        self._root.geometry(self._config.main_window_geometry)
+        if self._config.main_window_zoomed:
+            self._root.state('zoomed')
         self._root.grid_rowconfigure(0, weight=1)
         self._root.grid_columnconfigure(0, weight=0)
         self._root.grid_columnconfigure(1, weight=1, minsize=380)
         self._root.grid_columnconfigure(2, weight=1)
         self._root.bind('<Any-KeyPress>', self._key_pressed)
+        self._root.bind("<Configure>", self._configure)
 
         STYLE_TASKLIST_TREEVIEW = 'tasklist_treeview.Treeview'
         STYLE_TASK_TREEVIEW = 'task_treeview.Treeview'
@@ -42,6 +47,7 @@ class MainWindow:
 
         style = ttk.Style(self._root)
         self._theme = Theme()
+        self._theme.fontfamily = self._config.theme_fontfamily
         self._theme.configure(style)
         self._theme.configure_accent_treeview(style, STYLE_TASKLIST_TREEVIEW, self._theme.normal_font)
         self._theme.configure_main_treeview(style, STYLE_TASK_TREEVIEW, self._theme.normal_font)
@@ -437,6 +443,13 @@ class MainWindow:
             self._archive_task_button.config(text='Unarchive')
         else:
             self._archive_task_button.config(text='Archive')
+
+    # noinspection PyUnusedLocal
+    def _configure(self, event):
+        self._config.main_window_zoomed = 'zoomed' in self._root.state()
+        if not self._config.main_window_zoomed:
+            self._config.main_window_geometry = self._root.geometry()
+        self._config.save()
 
     def show(self) -> None:
         self._root.mainloop()
