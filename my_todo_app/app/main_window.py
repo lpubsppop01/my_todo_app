@@ -7,6 +7,7 @@ import tkinter as tk
 import tkinter.messagebox as ttk_messagebox
 import tkinter.scrolledtext as tk_scrolledtext
 from tkinter import ttk
+from typing import *
 
 from my_todo_app.app.movetask_dialog import MoveTaskDialog
 from my_todo_app.app.tasklist_dialog import AddOrEditTaskListDialog
@@ -145,7 +146,9 @@ class MainWindow:
 
         self._task_treeview = ttk.Treeview(center_frame, show='tree', style=STYLE_TASK_TREEVIEW)
         self._task_treeview.column('#0', width=300)
-        # self._tasklist_treeview.tag_configure('done', background='yellow')
+        self._task_treeview.tag_configure('completed',
+                                          foreground=self._theme.main_completed_foreground,
+                                          font=self._theme.normal_completed_font)
         self._task_treeview.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
                                  pady=(self._theme.margin_half, self._theme.margin))
         self._task_treeview.bind('<<TreeviewSelect>>', self._task_treeview_selected)
@@ -370,7 +373,7 @@ class MainWindow:
         self._tasklist_treeview.delete(*self._tasklist_treeview.get_children())
         for tasklist in self._engine.shown_tasklists:
             label = tasklist.name if tasklist.name else 'Empty'
-            self._tasklist_treeview.insert('', tk.END, iid=tasklist.id, text=label, tags=('undone',))
+            self._tasklist_treeview.insert('', tk.END, iid=tasklist.id, text=label)
         if self._engine.selected_tasklist:
             self._tasklist_treeview.selection_set(self._engine.selected_tasklist.id)
         self._update_tasklist_controls()
@@ -391,7 +394,9 @@ class MainWindow:
         self._task_treeview.delete(*self._task_treeview.get_children())
         for task in self._engine.shown_tasks:
             label = task.name if task.name else 'Empty'
-            self._task_treeview.insert(task.parent_task_id, tk.END, iid=task.id, text=label, values=task.id, open=True)
+            tags: Tuple[str] = ('completed',) if task.completed else ()
+            self._task_treeview.insert(task.parent_task_id, tk.END, iid=task.id, text=label, values=task.id, open=True,
+                                       tags=tags)
         if self._engine.selected_task:
             self._task_treeview.selection_set(self._engine.selected_task.id)
         self._update_task_controls()

@@ -26,6 +26,7 @@ class Theme:
         self._main_background_selected = 'gainsboro'
         self._main_foreground = 'black'
         self._main_foreground_selected = 'black'
+        self._main_done_foreground = 'gray'
         self._sub_background = 'white'
         self._sub_foreground = 'black'
 
@@ -74,6 +75,10 @@ class Theme:
         return self._fontfamily, self._normal_fontsize, ''
 
     @property
+    def normal_completed_font(self) -> Tuple[str, int, str]:
+        return self._fontfamily, self._normal_fontsize, 'overstrike'
+
+    @property
     def large_font(self) -> Tuple[str, int, str]:
         return self._fontfamily, self._large_fontsize, ''
 
@@ -108,3 +113,7 @@ class Theme:
     @property
     def main_foreground_selected(self) -> str:
         return self._main_foreground_selected
+
+    @property
+    def main_completed_foreground(self) -> str:
+        return self._main_done_foreground
