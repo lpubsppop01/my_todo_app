@@ -198,16 +198,13 @@ class TaskEngine:
         self._db.upsert_task(self._selected_task)
         self._update_shown_tasks()
 
-    def edit_selected_task(self, name: Optional[str] = None, list_id: Optional[str] = None,
-                           memo: Optional[str] = None,
+    def edit_selected_task(self, name: Optional[str] = None, memo: Optional[str] = None,
                            completed: Optional[bool] = None, archived: Optional[bool] = None) -> None:
         if self._selected_task is None:
             raise RuntimeError('No task is selected')
 
         if name is not None:
             self._selected_task.name = name
-        if list_id is not None:
-            self._selected_task.list_id = list_id
         if memo is not None:
             self.selected_task.memo = memo
         if completed is not None:
@@ -219,6 +216,31 @@ class TaskEngine:
         self._selected_task.updated_at = int(datetime.now().timestamp())
         self._db.upsert_task(self._selected_task)
         self._update_shown_tasks()
+
+    def can_move_selected_task(self) -> bool:
+        if self._selected_task is None:
+            return False
+        if self._selected_task.parent_task_id:
+            return False
+        return True
+
+    def move_selected_task(self, list_id: str):
+        if self._selected_task is None:
+            raise RuntimeError('No task is selected')
+        if self._selected_task.parent_task_id:
+            raise RuntimeError('Can not move sub task only')
+
+        self._move_task(self._selected_task, list_id)
+        self._update_shown_tasks()
+
+    def _move_task(self, task: Task, list_id: str):
+        task.list_id = list_id
+        task.updated_at = int(datetime.now().timestamp())
+        self._db.upsert_task(task)
+
+        children = self._db.get_tasks(parent_task_id=task.id)
+        for child in children:
+            self._move_task(child, list_id)
 
     def remove_selected_task(self):
         if self._selected_task is None:

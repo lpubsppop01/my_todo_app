@@ -181,7 +181,7 @@ class TestTaskEngine(TestCase):
         engine.select_task(engine.shown_tasks[1].id)
         datetime_20190927_121500 = datetime(2019, 9, 27, 12, 15, 0)
         with freeze_time(datetime_20190927_121500):
-            engine.edit_selected_task(list_id=engine.shown_tasklists[1].id)
+            engine.move_selected_task(list_id=engine.shown_tasklists[1].id)
 
         self.assertEqual(1, len(engine.shown_tasks))
 
@@ -319,6 +319,8 @@ class TestTaskEngine(TestCase):
         db = SQLite3TaskDatabase(db_path)
         engine = TaskEngine(db)
         engine.add_tasklist('Inbox')
+        engine.add_tasklist('Next Action')
+        engine.select_tasklist(engine.shown_tasklists[0].id)
         with freeze_time(datetime(2019, 9, 27, 12, 0, 0)):
             engine.add_task(name='Task1')
         with freeze_time(datetime(2019, 9, 27, 12, 5, 0)):
@@ -334,6 +336,18 @@ class TestTaskEngine(TestCase):
         self.assertEqual('Sub1', engine.shown_tasks[1].name)
         self.assertEqual(engine.shown_tasks[0].id, engine.shown_tasks[1].parent_task_id)
         self.assertEqual(datetime_20190927_124000.timestamp(), engine.shown_tasks[1].updated_at)
+        self.assertFalse(engine.can_move_selected_task())
+
+        engine.select_task(engine.shown_tasks[0].id)
+        datetime_20190927_125000 = datetime(2019, 9, 27, 12, 50, 0)
+        with freeze_time(datetime_20190927_125000):
+            engine.move_selected_task(list_id=engine._shown_tasklists[1].id)
+
+        self.assertEqual(1, len(engine.shown_tasks))
+
+        engine.select_tasklist(engine.shown_tasklists[1].id)
+
+        self.assertEqual(2, len(engine.shown_tasks))
 
         db._conn.close()
         os.remove(db_path)

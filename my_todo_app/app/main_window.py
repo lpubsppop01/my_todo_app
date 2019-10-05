@@ -116,9 +116,9 @@ class MainWindow:
                                                relief=tk.FLAT, command=self._complete_task_button_clicked)
         self._complete_task_button.grid(row=0, column=3, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        move_task_button = tk.Button(center_top_frame, text='Move', width=self._theme.button_width, relief=tk.FLAT,
-                                     command=self._move_task_button_clicked)
-        move_task_button.grid(row=0, column=4, sticky=tk.E, padx=(self._theme.margin, 0))
+        self._move_task_button = tk.Button(center_top_frame, text='Move', width=self._theme.button_width,
+                                           relief=tk.FLAT, command=self._move_task_button_clicked)
+        self._move_task_button.grid(row=0, column=4, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._up_task_button = tk.Button(center_top_frame, text='Up', width=self._theme.button_width, relief=tk.FLAT,
                                          command=self._up_task_button_clicked)
@@ -247,8 +247,8 @@ class MainWindow:
         self._task_name_entry.focus_set()
 
     def _move_task_button_clicked(self) -> None:
-        if self._engine.selected_task is None:
-            ttk_messagebox.showerror('Error', 'No task is selected.')
+        if not self._engine.can_move_selected_task():
+            ttk_messagebox.showerror('Error', 'Unable to move selected task.')
             return
 
         candidate_tasklists = [tasklist for tasklist in self._engine.shown_tasklists
@@ -256,7 +256,7 @@ class MainWindow:
 
         dialog = MoveTaskDialog(self._root, self._theme, candidate_tasklists)
         if dialog.show_dialog():
-            self._engine.edit_selected_task(list_id=dialog.result_tasklist.id)
+            self._engine.move_selected_task(list_id=dialog.result_tasklist.id)
             self._update_task_treeview()
 
     def _remove_task_button_clicked(self) -> None:
@@ -412,6 +412,11 @@ class MainWindow:
             self._complete_task_button.config(text='Uncomplete')
         else:
             self._complete_task_button.config(text='Complete')
+
+        if self._engine.can_move_selected_task():
+            self._move_task_button.config(state=tk.NORMAL)
+        else:
+            self._move_task_button.config(state=tk.DISABLED)
 
         if self._engine.can_up_selected_task():
             self._up_task_button.config(state=tk.NORMAL)
