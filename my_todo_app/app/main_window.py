@@ -401,8 +401,8 @@ class MainWindow:
         for task in self._engine.shown_tasks:
             label = task.name if task.name else 'Empty'
             tags: Tuple[str] = ('completed',) if task.completed else ()
-            self._task_treeview.insert(task.parent_task_id, tk.END, iid=task.id, text=label, values=task.id, open=True,
-                                       tags=tags)
+            self._task_treeview.insert(task.parent_task_id, tk.END, iid=task.id, text=label, values=task.id,
+                                       open=True, tags=tags)
         if self._engine.selected_task:
             self._task_treeview.selection_set(self._engine.selected_task.id)
         self._update_task_controls()
