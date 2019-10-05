@@ -110,5 +110,15 @@ class TaskDatabase(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def get_first_task(self, parent_task_id: Optional[str] = None,
+                       sort_key_after: Optional[float] = None) -> Optional[Task]:
+        pass
+
+    @abstractmethod
+    def get_last_task(self, parent_task_id: Optional[str] = None,
+                      sort_key_before: Optional[float] = None) -> Optional[Task]:
+        pass
+
+    @abstractmethod
     def get_tasklists(self, id_: Optional[str] = None) -> List[TaskList]:
         pass

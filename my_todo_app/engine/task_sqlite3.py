@@ -148,21 +148,64 @@ class SQLite3TaskDatabase(TaskDatabase):
         select_sql += ' order by sort_key'
         tasks = []
         for row in self._conn.execute(select_sql, select_params):
-            id_: str = row[0]
-            list_id: str = row[1]
-            parent_task_id: str = row[2]
-            name: str = row[3]
-            tags: str = row[4]
-            memo: str = row[5]
-            completed: bool = bool(int(row[6]))
-            archived: bool = bool(int(row[7]))
-            created_at: int = row[8]
-            updated_at: int = row[9]
-            completed_at: int = row[10]
-            sort_key: float = row[11]
-            tasks.append(Task(id_, list_id, parent_task_id, name, tags, memo, completed, archived,
-                              created_at, updated_at, completed_at, sort_key))
+            task = self._row_to_task(row)
+            tasks.append(task)
         return tasks
+
+    def get_first_task(self, parent_task_id: Optional[str] = None,
+                       sort_key_after: Optional[float] = None) -> Optional[Task]:
+        select_sql = 'select * from tasks'
+        select_params = []
+        if parent_task_id is not None:
+            select_sql += ' and' if select_params else ' where'
+            select_sql += ' parent_task_id = ?'
+            select_params.append(parent_task_id)
+        if sort_key_after is not None:
+            select_sql += ' and' if select_params else ' where'
+            select_sql += ' sort_key > ?'
+            select_params.append(sort_key_after)
+        select_sql += ' order by sort_key limit 1'
+        tasks = []
+        for row in self._conn.execute(select_sql, select_params):
+            task = self._row_to_task(row)
+            tasks.append(task)
+        return tasks[0] if tasks else None
+
+    def get_last_task(self, parent_task_id: Optional[str] = None,
+                      sort_key_before: Optional[float] = None) -> Optional[Task]:
+        select_sql = 'select * from tasks'
+        select_params = []
+        if parent_task_id is not None:
+            select_sql += ' and' if select_params else ' where'
+            select_sql += ' parent_task_id = ?'
+            select_params.append(parent_task_id)
+        if sort_key_before is not None:
+            select_sql += ' and' if select_params else ' where'
+            select_sql += ' sort_key < ?'
+            select_params.append(sort_key_before)
+        select_sql += ' order by sort_key desc limit 1'
+        tasks = []
+        for row in self._conn.execute(select_sql, select_params):
+            task = self._row_to_task(row)
+            tasks.append(task)
+        return tasks[0] if tasks else None
+
+    @staticmethod
+    def _row_to_task(row: Any) -> Task:
+        id_: str = row[0]
+        list_id: str = row[1]
+        parent_task_id: str = row[2]
+        name: str = row[3]
+        tags: str = row[4]
+        memo: str = row[5]
+        completed: bool = bool(int(row[6]))
+        archived: bool = bool(int(row[7]))
+        created_at: int = row[8]
+        updated_at: int = row[9]
+        completed_at: int = row[10]
+        sort_key: float = row[11]
+        return Task(id_, list_id, parent_task_id, name, tags, memo, completed, archived,
+                    created_at, updated_at, completed_at, sort_key)
 
     def get_tasklists(self, id_: Optional[str] = None) -> List[TaskList]:
         select_sql = 'select * from tasklists'
@@ -174,8 +217,13 @@ class SQLite3TaskDatabase(TaskDatabase):
         select_sql += ' order by sort_key'
         tasklists = []
         for row in self._conn.execute(select_sql, select_params):
-            id_: str = row[0]
-            name: str = row[1]
-            sort_key: float = row[2]
-            tasklists.append(TaskList(id_, name, sort_key))
+            tasklist = self._row_to_tasklist(row)
+            tasklists.append(tasklist)
         return tasklists
+
+    @staticmethod
+    def _row_to_tasklist(row: Any) -> TaskList:
+        id_: str = row[0]
+        name: str = row[1]
+        sort_key: float = row[2]
+        return TaskList(id_, name, sort_key)

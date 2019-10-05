@@ -13,7 +13,7 @@ from my_todo_app.engine.task_sqlite3 import SQLite3TaskDatabase
 class TestTaskDatabase(TestCase):
 
     def test_crud(self):
-        db_path = os.path.join(os.path.dirname(__file__), 'TestTaskDatabase_test_it_works.sqlite3')
+        db_path = os.path.join(os.path.dirname(__file__), 'TestTaskDatabase_test_crud.sqlite3')
         if os.path.exists(db_path):
             os.remove(db_path)
         db = SQLite3TaskDatabase(db_path)
@@ -141,3 +141,40 @@ class TestTaskDatabase(TestCase):
         sort_key_changed = copy.deepcopy(task)
         sort_key_changed.sort_key = 10
         self.assertFalse(task.equals(sort_key_changed))
+
+    def test_get_first_last(self):
+        db_path = os.path.join(os.path.dirname(__file__), 'TestTaskDatabase_test_get_first_last.sqlite3')
+        if os.path.exists(db_path):
+            os.remove(db_path)
+        db = SQLite3TaskDatabase(db_path)
+
+        inbox = TaskList(str(uuid.uuid4()), 'Inbox', 0)
+        db.upsert_tasklist(inbox)
+        task1 = Task(str(uuid.uuid4()), inbox.id, '', 'Task 1', 'test', '', False, False, 10, 10, 0, 0)
+        task2 = Task(str(uuid.uuid4()), inbox.id, '', 'Task 2', 'test', '', False, False, 10, 10, 0, 2)
+        task2_1 = Task(str(uuid.uuid4()), inbox.id, task2.id, 'Task 2-1', 'test', '', False, False, 10, 10, 0, 2.1)
+        task2_2 = Task(str(uuid.uuid4()), inbox.id, task2.id, 'Task 2-2', 'test', '', False, True, 10, 10, 0, 2.2)
+        task2_3 = Task(str(uuid.uuid4()), inbox.id, task2.id, 'Task 2-3', 'test', '', False, False, 10, 10, 0, 2.3)
+        task2_4 = Task(str(uuid.uuid4()), inbox.id, task2.id, 'Task 2-4', 'test', '', False, False, 10, 10, 0, 2.4)
+        task2_5 = Task(str(uuid.uuid4()), inbox.id, task2.id, 'Task 2-5', 'test', '', False, True, 10, 10, 0, 2.5)
+        task3 = Task(str(uuid.uuid4()), inbox.id, '', 'Task 3', 'test', '', False, False, 10, 10, 0, 3)
+        db.upsert_task(task1)
+        db.upsert_task(task2)
+        db.upsert_task(task2_1)
+        db.upsert_task(task2_2)
+        db.upsert_task(task2_3)
+        db.upsert_task(task2_4)
+        db.upsert_task(task2_5)
+        db.upsert_task(task3)
+
+        self.assertTrue(task1.equals(db.get_first_task()))
+        self.assertTrue(task3.equals(db.get_last_task()))
+        self.assertTrue(task2_1.equals(db.get_first_task(parent_task_id=task2.id)))
+        self.assertTrue(task2_5.equals(db.get_last_task(parent_task_id=task2.id)))
+        self.assertTrue(task2_2.equals(db.get_last_task(sort_key_before=task2_3.sort_key)))
+        self.assertTrue(task2_4.equals(db.get_first_task(sort_key_after=task2_3.sort_key)))
+        self.assertTrue(task1.equals(db.get_last_task(parent_task_id='', sort_key_before=task2.sort_key)))
+        self.assertTrue(task3.equals(db.get_first_task(parent_task_id='', sort_key_after=task2.sort_key)))
+
+        db.close()
+        os.remove(db_path)
