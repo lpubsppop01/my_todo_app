@@ -81,11 +81,11 @@ class MoveTaskDialog:
         bottom_frame.grid_rowconfigure(0, weight=1)
         bottom_frame.grid_columnconfigure(0, weight=1)
 
-        ok_button = tk.Button(bottom_frame, text='OK', width=self._theme.button_width, relief=tk.FLAT,
+        ok_button = tk.Button(bottom_frame, text='OK', width=self._theme.text_button_width, relief=tk.FLAT,
                               command=self._ok_button_clicked)
         ok_button.grid(row=0, column=0, sticky=tk.E)
 
-        cancel_button = tk.Button(bottom_frame, text='Cancel', width=self._theme.button_width, relief=tk.FLAT,
+        cancel_button = tk.Button(bottom_frame, text='Cancel', width=self._theme.text_button_width, relief=tk.FLAT,
                                   command=self._cancel_button_clicked)
         cancel_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
 

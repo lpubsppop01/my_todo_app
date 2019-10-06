@@ -3,6 +3,7 @@
 
 """The main window."""
 
+import os
 import tkinter as tk
 import tkinter.messagebox as ttk_messagebox
 import tkinter.scrolledtext as tk_scrolledtext
@@ -20,9 +21,10 @@ from my_todo_app.engine.task import TaskDatabase
 class MainWindow:
     """A main window."""
 
-    def __init__(self, db: TaskDatabase, config: Config) -> None:
+    def __init__(self, db: TaskDatabase, config: Config, images_path: str) -> None:
         self._engine: TaskEngine = TaskEngine(db)
         self._config: Config = config
+        self._images_path = images_path
         self._layout()
         self._update_tasklist_treeview()
 
@@ -60,6 +62,18 @@ class MainWindow:
         #     return [e for e in style.map('Treeview', query_opt=option) if e[:2] != ('!disabled', '!selected')]
         # style.map('Treeview', foreground=fixed_map('foreground'), background=fixed_map('background'))
 
+        self._images = dict()
+
+        def add_image(key: str, filename: str):
+            path = os.path.join(self._images_path, filename)
+            self._images[key] = tk.PhotoImage(file=path)
+
+        add_image('icon_add_accent', 'ic_add_circle_white_24dp.png')
+        add_image('icon_edit_accent', 'ic_create_white_24dp.png')
+        add_image('icon_delete_accent', 'ic_delete_white_24dp.png')
+        add_image('icon_arrow_up_accent', 'ic_arrow_upward_white_24dp.png')
+        add_image('icon_arrow_down_accent', 'ic_arrow_downward_white_24dp.png')
+
         left_frame = ttk.Frame(self._root, style=STYLE_LEFT_FRAME)
         left_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W))
         left_frame.grid_rowconfigure(1, weight=1)
@@ -70,26 +84,40 @@ class MainWindow:
                             padx=(self._theme.margin, self._theme.margin),
                             pady=(self._theme.margin, self._theme.margin_half))
 
-        add_tasklist_button = tk.Button(left_top_frame, text='Add', width=self._theme.button_width, relief=tk.FLAT,
+        add_tasklist_button = tk.Button(left_top_frame, image=self._images['icon_add_accent'],
+                                        width=self._theme.image_button_width, relief=tk.FLAT,
+                                        background=self._theme.accent_background,
+                                        activebackground=self._theme.accent_background,
                                         command=self._add_tasklist_button_clicked)
-        add_tasklist_button.grid(row=0, column=0, sticky=tk.E)
+        add_tasklist_button.grid(row=0, column=0, sticky=tk.W)
 
-        remove_tasklist_button = tk.Button(left_top_frame, text='Edit', width=self._theme.button_width, relief=tk.FLAT,
-                                           command=self._edit_tasklist_button_clicked)
-        remove_tasklist_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
+        edit_tasklist_button = tk.Button(left_top_frame, image=self._images['icon_edit_accent'],
+                                         width=self._theme.image_button_width, relief=tk.FLAT,
+                                         background=self._theme.accent_background,
+                                         activebackground=self._theme.accent_background,
+                                         command=self._edit_tasklist_button_clicked)
+        edit_tasklist_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        remove_tasklist_button = tk.Button(left_top_frame, text='Remove', width=self._theme.button_width,
+        remove_tasklist_button = tk.Button(left_top_frame, image=self._images['icon_delete_accent'],
+                                           width=self._theme.image_button_width,
+                                           background=self._theme.accent_background,
+                                           activebackground=self._theme.accent_background,
                                            relief=tk.FLAT, command=self._remove_tasklist_button_clicked)
         remove_tasklist_button.grid(row=0, column=2, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        self._up_tasklist_button = tk.Button(left_top_frame, text='Up', width=self._theme.button_width, relief=tk.FLAT,
+        self._up_tasklist_button = tk.Button(left_top_frame, image=self._images['icon_arrow_up_accent'],
+                                             width=self._theme.image_button_width, relief=tk.FLAT,
+                                             background=self._theme.accent_background,
+                                             activebackground=self._theme.accent_background,
                                              command=self._up_tasklist_button_clicked)
-        self._up_tasklist_button.grid(row=1, column=0, sticky=tk.E, pady=(self._theme.margin, 0))
+        self._up_tasklist_button.grid(row=0, column=3, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        self._down_tasklist_button = tk.Button(left_top_frame, text='Down', width=self._theme.button_width,
+        self._down_tasklist_button = tk.Button(left_top_frame, image=self._images['icon_arrow_down_accent'],
+                                               width=self._theme.image_button_width,
+                                               background=self._theme.accent_background,
+                                               activebackground=self._theme.accent_background,
                                                relief=tk.FLAT, command=self._down_tasklist_button_clicked)
-        self._down_tasklist_button.grid(row=1, column=1, sticky=tk.E,
-                                        padx=(self._theme.margin, 0), pady=(self._theme.margin, 0))
+        self._down_tasklist_button.grid(row=0, column=4, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._tasklist_treeview = ttk.Treeview(left_frame, show='tree', style=STYLE_TASKLIST_TREEVIEW)
         self._tasklist_treeview.column('#0', width=200)
@@ -107,36 +135,36 @@ class MainWindow:
                               padx=(self._theme.margin, self._theme.margin),
                               pady=(self._theme.margin, self._theme.margin_half))
 
-        add_task_button = tk.Button(center_top_frame, text='Add', width=self._theme.button_width, relief=tk.FLAT,
+        add_task_button = tk.Button(center_top_frame, text='Add', width=self._theme.text_button_width, relief=tk.FLAT,
                                     command=self._add_task_button_clicked)
         add_task_button.grid(row=0, column=0, sticky=tk.E)
 
-        add_child_task_button = tk.Button(center_top_frame, text='Add Child', width=self._theme.button_width,
+        add_child_task_button = tk.Button(center_top_frame, text='Add Child', width=self._theme.text_button_width,
                                           relief=tk.FLAT, command=self._add_child_task_button_clicked)
         add_child_task_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        remove_task_button = tk.Button(center_top_frame, text='Remove', width=self._theme.button_width, relief=tk.FLAT,
-                                       command=self._remove_task_button_clicked)
+        remove_task_button = tk.Button(center_top_frame, text='Remove', width=self._theme.text_button_width,
+                                       relief=tk.FLAT, command=self._remove_task_button_clicked)
         remove_task_button.grid(row=0, column=2, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        self._complete_task_button = tk.Button(center_top_frame, text='Complete', width=self._theme.button_width,
+        self._complete_task_button = tk.Button(center_top_frame, text='Complete', width=self._theme.text_button_width,
                                                relief=tk.FLAT, command=self._complete_task_button_clicked)
         self._complete_task_button.grid(row=0, column=3, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        self._move_task_button = tk.Button(center_top_frame, text='Move', width=self._theme.button_width,
+        self._move_task_button = tk.Button(center_top_frame, text='Move', width=self._theme.text_button_width,
                                            relief=tk.FLAT, command=self._move_task_button_clicked)
         self._move_task_button.grid(row=0, column=4, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        self._up_task_button = tk.Button(center_top_frame, text='Up', width=self._theme.button_width, relief=tk.FLAT,
-                                         command=self._up_task_button_clicked)
+        self._up_task_button = tk.Button(center_top_frame, text='Up', width=self._theme.text_button_width,
+                                         relief=tk.FLAT, command=self._up_task_button_clicked)
         self._up_task_button.grid(row=1, column=0, sticky=tk.E, pady=(self._theme.margin, 0))
 
-        self._down_task_button = tk.Button(center_top_frame, text='Down', width=self._theme.button_width,
+        self._down_task_button = tk.Button(center_top_frame, text='Down', width=self._theme.text_button_width,
                                            relief=tk.FLAT, command=self._down_task_button_clicked)
         self._down_task_button.grid(row=1, column=1, sticky=tk.E,
                                     padx=(self._theme.margin, 0), pady=(self._theme.margin, 0))
 
-        self._archive_task_button = tk.Button(center_top_frame, text='Archive', width=self._theme.button_width,
+        self._archive_task_button = tk.Button(center_top_frame, text='Archive', width=self._theme.text_button_width,
                                               relief=tk.FLAT, command=self._archive_task_button_clicked)
         self._archive_task_button.grid(row=1, column=2, sticky=tk.E,
                                        padx=(self._theme.margin, 0), pady=(self._theme.margin, 0))
@@ -175,10 +203,11 @@ class MainWindow:
                              padx=(self._theme.margin, self._theme.margin),
                              pady=(self._theme.margin, self._theme.margin_half))
 
-        zoom_up_button = tk.Button(right_top_frame, text='Zoom In', width=self._theme.button_width, relief=tk.FLAT)
+        zoom_up_button = tk.Button(right_top_frame, text='Zoom In', width=self._theme.text_button_width, relief=tk.FLAT)
         zoom_up_button.grid(row=0, column=0, sticky=tk.E)
 
-        zoom_out_button = tk.Button(right_top_frame, text='Zoom Out', width=self._theme.button_width, relief=tk.FLAT)
+        zoom_out_button = tk.Button(right_top_frame, text='Zoom Out', width=self._theme.text_button_width,
+                                    relief=tk.FLAT)
         zoom_out_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._task_name_entry = tk.Entry(right_frame, font=self._theme.large_font, borderwidth=0)

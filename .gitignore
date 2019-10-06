@@ -11,3 +11,6 @@ __pycache__/
 
 work/
 venv/
+
+/images/
+!/images/download.py

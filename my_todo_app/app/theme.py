@@ -96,8 +96,16 @@ class Theme:
         return self._margin * 2
 
     @property
-    def button_width(self) -> int:
+    def text_button_width(self) -> int:
         return self._button_width
+
+    @property
+    def image_button_width(self) -> int:
+        return 24
+
+    @property
+    def accent_background(self) -> str:
+        return self._accent_background
 
     @property
     def main_background(self) -> str:
