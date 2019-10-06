@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8-unix -*-
 
-"""Script to download resource images."""
+"""Script to download external icon files."""
 
 import os
 
@@ -23,9 +23,10 @@ def download_material_design_icon(dir_path: str, category: str, name: str) -> No
             raise RuntimeError('Download failure')
 
 
-here = os.path.dirname(__file__)
-download_material_design_icon(here, 'content', 'ic_add_circle_white_24dp.png')
-download_material_design_icon(here, 'content', 'ic_create_white_24dp.png')
-download_material_design_icon(here, 'action', 'ic_delete_white_24dp.png')
-download_material_design_icon(here, 'navigation', 'ic_arrow_upward_white_24dp.png')
-download_material_design_icon(here, 'navigation', 'ic_arrow_downward_white_24dp.png')
+images_path = os.path.join(os.path.dirname(__file__), '../images')
+os.makedirs(images_path, exist_ok=True)
+download_material_design_icon(images_path, 'content', 'ic_add_circle_white_24dp.png')
+download_material_design_icon(images_path, 'content', 'ic_create_white_24dp.png')
+download_material_design_icon(images_path, 'action', 'ic_delete_white_24dp.png')
+download_material_design_icon(images_path, 'navigation', 'ic_arrow_upward_white_24dp.png')
+download_material_design_icon(images_path, 'navigation', 'ic_arrow_downward_white_24dp.png')
