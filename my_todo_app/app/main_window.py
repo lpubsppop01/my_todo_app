@@ -73,6 +73,18 @@ class MainWindow:
         add_image('icon_delete_accent', 'ic_delete_white_24dp.png')
         add_image('icon_arrow_up_accent', 'ic_arrow_upward_white_24dp.png')
         add_image('icon_arrow_down_accent', 'ic_arrow_downward_white_24dp.png')
+        add_image('icon_add_main', 'ic_add_circle_black_24dp.png')
+        add_image('icon_insert_as_last_child_main', 'myicon_insert_as_last_child_24x24.png')
+        add_image('icon_delete_main', 'ic_delete_black_24dp.png')
+        add_image('icon_move_to_list_main', 'myicon_move_to_list_24x24.png')
+        add_image('icon_check_main', 'myicon_check_24x24.png')
+        add_image('icon_uncheck_main', 'myicon_uncheck_24x24.png')
+        add_image('icon_archive_main', 'myicon_archive_24x24.png')
+        add_image('icon_unarchive_main', 'myicon_unarchive_24x24.png')
+        add_image('icon_arrow_up_main', 'ic_arrow_upward_black_24dp.png')
+        add_image('icon_arrow_down_main', 'ic_arrow_downward_black_24dp.png')
+        add_image('icon_archive_is_visible_main', 'myicon_archive_is_visible_24x24.png')
+        add_image('icon_archive_is_invisible_main', 'myicon_archive_is_invisible_24x24.png')
 
         left_frame = ttk.Frame(self._root, style=STYLE_LEFT_FRAME)
         left_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W))
@@ -127,56 +139,80 @@ class MainWindow:
 
         center_frame = ttk.Frame(self._root, style=STYLE_CENTER_FRAME)
         center_frame.grid(row=0, column=1, sticky=(tk.N, tk.S, tk.E, tk.W))
+        center_frame.grid_rowconfigure(0, weight=0)
         center_frame.grid_rowconfigure(1, weight=1)
         center_frame.grid_columnconfigure(0, weight=1)
+        center_frame.grid_columnconfigure(1, weight=0)
 
         center_top_frame = ttk.Frame(center_frame, style=STYLE_CENTER_FRAME)
-        center_top_frame.grid(row=0, column=0, columnspan=2, sticky=(tk.N, tk.S, tk.W),
+        center_top_frame.grid(row=0, column=0, columnspan=2, sticky=(tk.N, tk.S, tk.E, tk.W),
                               padx=(self._theme.margin, self._theme.margin),
                               pady=(self._theme.margin, self._theme.margin_half))
+        center_top_frame.grid_columnconfigure(8, weight=1)
 
-        add_task_button = tk.Button(center_top_frame, text='Add', width=self._theme.text_button_width, relief=tk.FLAT,
+        add_task_button = tk.Button(center_top_frame, image=self._images['icon_add_main'],
+                                    width=self._theme.image_button_width, relief=tk.FLAT,
+                                    background=self._theme.main_background,
+                                    activebackground=self._theme.main_background,
                                     command=self._add_task_button_clicked)
         add_task_button.grid(row=0, column=0, sticky=tk.E)
 
-        add_child_task_button = tk.Button(center_top_frame, text='Add Child', width=self._theme.text_button_width,
-                                          relief=tk.FLAT, command=self._add_child_task_button_clicked)
+        add_child_task_button = tk.Button(center_top_frame, image=self._images['icon_insert_as_last_child_main'],
+                                          width=self._theme.image_button_width, relief=tk.FLAT,
+                                          background=self._theme.main_background,
+                                          activebackground=self._theme.main_background,
+                                          command=self._add_child_task_button_clicked)
         add_child_task_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        remove_task_button = tk.Button(center_top_frame, text='Remove', width=self._theme.text_button_width,
-                                       relief=tk.FLAT, command=self._remove_task_button_clicked)
+        remove_task_button = tk.Button(center_top_frame, image=self._images['icon_delete_main'],
+                                       width=self._theme.image_button_width, relief=tk.FLAT,
+                                       background=self._theme.main_background,
+                                       activebackground=self._theme.main_background,
+                                       command=self._remove_task_button_clicked)
         remove_task_button.grid(row=0, column=2, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        self._complete_task_button = tk.Button(center_top_frame, text='Complete', width=self._theme.text_button_width,
-                                               relief=tk.FLAT, command=self._complete_task_button_clicked)
+        self._complete_task_button = tk.Button(center_top_frame, image=self._images['icon_check_main'],
+                                               width=self._theme.image_button_width, relief=tk.FLAT,
+                                               background=self._theme.main_background,
+                                               activebackground=self._theme.main_background,
+                                               command=self._complete_task_button_clicked)
         self._complete_task_button.grid(row=0, column=3, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        self._move_task_button = tk.Button(center_top_frame, text='Move', width=self._theme.text_button_width,
-                                           relief=tk.FLAT, command=self._move_task_button_clicked)
-        self._move_task_button.grid(row=0, column=4, sticky=tk.E, padx=(self._theme.margin, 0))
+        self._archive_task_button = tk.Button(center_top_frame, image=self._images['icon_archive_main'],
+                                              width=self._theme.image_button_width, relief=tk.FLAT,
+                                              background=self._theme.main_background,
+                                              activebackground=self._theme.main_background,
+                                              command=self._archive_task_button_clicked)
+        self._archive_task_button.grid(row=0, column=4, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        self._up_task_button = tk.Button(center_top_frame, text='Up', width=self._theme.text_button_width,
-                                         relief=tk.FLAT, command=self._up_task_button_clicked)
-        self._up_task_button.grid(row=1, column=0, sticky=tk.E, pady=(self._theme.margin, 0))
+        self._move_task_button = tk.Button(center_top_frame, image=self._images['icon_move_to_list_main'],
+                                           width=self._theme.image_button_width, relief=tk.FLAT,
+                                           background=self._theme.main_background,
+                                           activebackground=self._theme.main_background,
+                                           command=self._move_task_button_clicked)
+        self._move_task_button.grid(row=0, column=5, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        self._down_task_button = tk.Button(center_top_frame, text='Down', width=self._theme.text_button_width,
-                                           relief=tk.FLAT, command=self._down_task_button_clicked)
-        self._down_task_button.grid(row=1, column=1, sticky=tk.E,
-                                    padx=(self._theme.margin, 0), pady=(self._theme.margin, 0))
+        self._up_task_button = tk.Button(center_top_frame, image=self._images['icon_arrow_up_main'],
+                                         width=self._theme.image_button_width, relief=tk.FLAT,
+                                         background=self._theme.main_background,
+                                         activebackground=self._theme.main_background,
+                                         command=self._up_task_button_clicked)
+        self._up_task_button.grid(row=0, column=6, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        self._archive_task_button = tk.Button(center_top_frame, text='Archive', width=self._theme.text_button_width,
-                                              relief=tk.FLAT, command=self._archive_task_button_clicked)
-        self._archive_task_button.grid(row=1, column=2, sticky=tk.E,
-                                       padx=(self._theme.margin, 0), pady=(self._theme.margin, 0))
+        self._down_task_button = tk.Button(center_top_frame, image=self._images['icon_arrow_down_main'],
+                                           width=self._theme.image_button_width, relief=tk.FLAT,
+                                           background=self._theme.main_background,
+                                           activebackground=self._theme.main_background,
+                                           command=self._down_task_button_clicked)
+        self._down_task_button.grid(row=0, column=7, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        self._shows_archive_checkbox_value = tk.BooleanVar()
-        self._shows_archive_checkbox = tk.Checkbutton(center_top_frame, text='Show Archive',
-                                                      onvalue=True, offvalue=False,
-                                                      variable=self._shows_archive_checkbox_value,
+        self._toggle_shows_archive_button = tk.Button(center_top_frame,
+                                                      image=self._images['icon_archive_is_invisible_main'],
+                                                      width=self._theme.image_button_width, relief=tk.FLAT,
                                                       background=self._theme.main_background,
-                                                      command=self._shows_archive_checkbox_changed)
-        self._shows_archive_checkbox.grid(row=1, column=3, columnspan=2, sticky=tk.W,
-                                          padx=(self._theme.margin, 0), pady=(self._theme.margin, 0))
+                                                      activebackground=self._theme.main_background,
+                                                      command=self._toggle_shows_archive_button_clicked)
+        self._toggle_shows_archive_button.grid(row=0, column=8, sticky=tk.E)
 
         self._task_treeview = ttk.Treeview(center_frame, show='tree', style=STYLE_TASK_TREEVIEW)
         self._task_treeview.column('#0', width=300)
@@ -339,8 +375,14 @@ class MainWindow:
         self._engine.edit_selected_task(archived=not self._engine.selected_task.archived)
         self._update_task_treeview()
 
-    def _shows_archive_checkbox_changed(self) -> None:
-        self._engine.shows_archive = self._shows_archive_checkbox_value.get()
+    def _toggle_shows_archive_button_clicked(self) -> None:
+        self._engine.shows_archive = not self._engine.shows_archive
+
+        if self._engine.shows_archive:
+            self._toggle_shows_archive_button.config(image=self._images['icon_archive_is_visible_main'])
+        else:
+            self._toggle_shows_archive_button.config(image=self._images['icon_archive_is_invisible_main'])
+
         self._update_task_treeview()
 
     def _key_pressed(self, event) -> None:
@@ -449,9 +491,9 @@ class MainWindow:
             self._task_memo_text.config(state=tk.DISABLED)
 
         if self._engine.selected_task and self._engine.selected_task.completed:
-            self._complete_task_button.config(text='Uncomplete')
+            self._complete_task_button.config(image=self._images['icon_uncheck_main'])
         else:
-            self._complete_task_button.config(text='Complete')
+            self._complete_task_button.config(image=self._images['icon_check_main'])
 
         if self._engine.can_move_selected_task():
             self._move_task_button.config(state=tk.NORMAL)
@@ -469,9 +511,9 @@ class MainWindow:
             self._down_task_button.config(state=tk.DISABLED)
 
         if self._engine.selected_task and self._engine.selected_task.archived:
-            self._archive_task_button.config(text='Unarchive')
+            self._archive_task_button.config(image=self._images['icon_unarchive_main'])
         else:
-            self._archive_task_button.config(text='Archive')
+            self._archive_task_button.config(image=self._images['icon_archive_main'])
 
     # noinspection PyUnusedLocal
     def _configure(self, event):

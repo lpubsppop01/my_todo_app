@@ -30,3 +30,7 @@ download_material_design_icon(images_path, 'content', 'ic_create_white_24dp.png'
 download_material_design_icon(images_path, 'action', 'ic_delete_white_24dp.png')
 download_material_design_icon(images_path, 'navigation', 'ic_arrow_upward_white_24dp.png')
 download_material_design_icon(images_path, 'navigation', 'ic_arrow_downward_white_24dp.png')
+download_material_design_icon(images_path, 'content', 'ic_add_circle_black_24dp.png')
+download_material_design_icon(images_path, 'action', 'ic_delete_black_24dp.png')
+download_material_design_icon(images_path, 'navigation', 'ic_arrow_upward_black_24dp.png')
+download_material_design_icon(images_path, 'navigation', 'ic_arrow_downward_black_24dp.png')
