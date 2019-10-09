@@ -103,19 +103,19 @@ class MainWindow:
                                         command=self._add_tasklist_button_clicked)
         add_tasklist_button.grid(row=0, column=0, sticky=tk.W)
 
-        edit_tasklist_button = tk.Button(left_top_frame, image=self._images['icon_edit_accent'],
-                                         width=self._theme.image_button_width, relief=tk.FLAT,
-                                         background=self._theme.accent_background,
-                                         activebackground=self._theme.accent_background,
-                                         command=self._edit_tasklist_button_clicked)
-        edit_tasklist_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
+        self._edit_tasklist_button = tk.Button(left_top_frame, image=self._images['icon_edit_accent'],
+                                               width=self._theme.image_button_width, relief=tk.FLAT,
+                                               background=self._theme.accent_background,
+                                               activebackground=self._theme.accent_background,
+                                               command=self._edit_tasklist_button_clicked)
+        self._edit_tasklist_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        remove_tasklist_button = tk.Button(left_top_frame, image=self._images['icon_delete_accent'],
-                                           width=self._theme.image_button_width,
-                                           background=self._theme.accent_background,
-                                           activebackground=self._theme.accent_background,
-                                           relief=tk.FLAT, command=self._remove_tasklist_button_clicked)
-        remove_tasklist_button.grid(row=0, column=2, sticky=tk.E, padx=(self._theme.margin, 0))
+        self._remove_tasklist_button = tk.Button(left_top_frame, image=self._images['icon_delete_accent'],
+                                                 width=self._theme.image_button_width,
+                                                 background=self._theme.accent_background,
+                                                 activebackground=self._theme.accent_background,
+                                                 relief=tk.FLAT, command=self._remove_tasklist_button_clicked)
+        self._remove_tasklist_button.grid(row=0, column=2, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._up_tasklist_button = tk.Button(left_top_frame, image=self._images['icon_arrow_up_accent'],
                                              width=self._theme.image_button_width, relief=tk.FLAT,
@@ -150,26 +150,26 @@ class MainWindow:
                               pady=(self._theme.margin, self._theme.margin_half))
         center_top_frame.grid_columnconfigure(8, weight=1)
 
-        add_task_button = tk.Button(center_top_frame, image=self._images['icon_add_main'],
-                                    width=self._theme.image_button_width, relief=tk.FLAT,
-                                    background=self._theme.main_background,
-                                    activebackground=self._theme.main_background,
-                                    command=self._add_task_button_clicked)
-        add_task_button.grid(row=0, column=0, sticky=tk.E)
-
-        add_child_task_button = tk.Button(center_top_frame, image=self._images['icon_insert_as_last_child_main'],
+        self._add_task_button = tk.Button(center_top_frame, image=self._images['icon_add_main'],
                                           width=self._theme.image_button_width, relief=tk.FLAT,
                                           background=self._theme.main_background,
                                           activebackground=self._theme.main_background,
-                                          command=self._add_child_task_button_clicked)
-        add_child_task_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
+                                          command=self._add_task_button_clicked)
+        self._add_task_button.grid(row=0, column=0, sticky=tk.E)
 
-        remove_task_button = tk.Button(center_top_frame, image=self._images['icon_delete_main'],
-                                       width=self._theme.image_button_width, relief=tk.FLAT,
-                                       background=self._theme.main_background,
-                                       activebackground=self._theme.main_background,
-                                       command=self._remove_task_button_clicked)
-        remove_task_button.grid(row=0, column=2, sticky=tk.E, padx=(self._theme.margin, 0))
+        self._add_child_task_button = tk.Button(center_top_frame, image=self._images['icon_insert_as_last_child_main'],
+                                                width=self._theme.image_button_width, relief=tk.FLAT,
+                                                background=self._theme.main_background,
+                                                activebackground=self._theme.main_background,
+                                                command=self._add_child_task_button_clicked)
+        self._add_child_task_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
+
+        self._remove_task_button = tk.Button(center_top_frame, image=self._images['icon_delete_main'],
+                                             width=self._theme.image_button_width, relief=tk.FLAT,
+                                             background=self._theme.main_background,
+                                             activebackground=self._theme.main_background,
+                                             command=self._remove_task_button_clicked)
+        self._remove_task_button.grid(row=0, column=2, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._complete_task_button = tk.Button(center_top_frame, image=self._images['icon_check_main'],
                                                width=self._theme.image_button_width, relief=tk.FLAT,
@@ -457,6 +457,16 @@ class MainWindow:
         self._update_task_treeview()
 
     def _update_tasklist_controls(self) -> None:
+        if self._engine.selected_tasklist is not None:
+            self._edit_tasklist_button.config(state=tk.NORMAL)
+        else:
+            self._edit_tasklist_button.config(state=tk.DISABLED)
+
+        if self._engine.selected_tasklist is not None:
+            self._remove_tasklist_button.config(state=tk.NORMAL)
+        else:
+            self._remove_tasklist_button.config(state=tk.DISABLED)
+
         if self._engine.can_up_selected_tasklist():
             self._up_tasklist_button.config(state=tk.NORMAL)
         else:
@@ -479,14 +489,27 @@ class MainWindow:
         self._update_task_controls()
 
     def _update_task_controls(self) -> None:
+        if self._engine.selected_tasklist is not None:
+            self._add_task_button.config(state=tk.NORMAL)
+        else:
+            self._add_task_button.config(state=tk.DISABLED)
+
         self._task_name_entry.delete(0, tk.END)
         self._task_memo_text.delete(1.0, tk.END)
         if self._engine.selected_task:
+            self._add_child_task_button.config(state=tk.NORMAL)
+            self._remove_task_button.config(state=tk.NORMAL)
+            self._complete_task_button.config(state=tk.NORMAL)
+            self._archive_task_button.config(state=tk.NORMAL)
             self._task_name_entry.config(state=tk.NORMAL)
             self._task_name_entry.insert(tk.END, self._engine.selected_task.name)
             self._task_memo_text.config(state=tk.NORMAL)
             self._task_memo_text.insert(tk.END, self._engine.selected_task.memo)
         else:
+            self._add_child_task_button.config(state=tk.DISABLED)
+            self._remove_task_button.config(state=tk.DISABLED)
+            self._complete_task_button.config(state=tk.DISABLED)
+            self._archive_task_button.config(state=tk.DISABLED)
             self._task_name_entry.config(state=tk.DISABLED)
             self._task_memo_text.config(state=tk.DISABLED)
 
