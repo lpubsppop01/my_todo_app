@@ -126,3 +126,7 @@ class Theme:
     @property
     def main_completed_foreground(self) -> str:
         return self._main_done_foreground
+
+    @property
+    def sub_background(self) -> str:
+        return self._sub_background

@@ -7,6 +7,7 @@ import os
 import tkinter as tk
 import tkinter.messagebox as ttk_messagebox
 import tkinter.scrolledtext as tk_scrolledtext
+import webbrowser
 from tkinter import ttk
 from typing import *
 
@@ -85,6 +86,7 @@ class MainWindow:
         add_image('icon_arrow_down_main', 'ic_arrow_downward_black_24dp.png')
         add_image('icon_archive_is_visible_main', 'myicon_archive_is_visible_24x24.png')
         add_image('icon_archive_is_invisible_main', 'myicon_archive_is_invisible_24x24.png')
+        add_image('icon_github', 'appbar.social.github.octocat.solid.png')
 
         left_frame = ttk.Frame(self._root, style=STYLE_LEFT_FRAME)
         left_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W))
@@ -235,16 +237,26 @@ class MainWindow:
         right_frame.grid_columnconfigure(0, weight=1)
 
         right_top_frame = ttk.Frame(right_frame, style=STYLE_RIGHT_FRAME)
-        right_top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.W),
+        right_top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
                              padx=(self._theme.margin, self._theme.margin),
                              pady=(self._theme.margin, self._theme.margin_half))
+        right_top_frame.grid_columnconfigure(2, weight=1)
 
-        zoom_up_button = tk.Button(right_top_frame, text='Zoom In', width=self._theme.text_button_width, relief=tk.FLAT)
-        zoom_up_button.grid(row=0, column=0, sticky=tk.E)
+        # zoom_up_button = tk.Button(right_top_frame, text='Zoom In', width=self._theme.text_button_width,
+        #                            relief=tk.FLAT)
+        # zoom_up_button.grid(row=0, column=0, sticky=tk.E)
+        #
+        # zoom_out_button = tk.Button(right_top_frame, text='Zoom Out', width=self._theme.text_button_width,
+        #                             relief=tk.FLAT)
+        # zoom_out_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
 
-        zoom_out_button = tk.Button(right_top_frame, text='Zoom Out', width=self._theme.text_button_width,
-                                    relief=tk.FLAT)
-        zoom_out_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
+        open_github_button = tk.Button(right_top_frame,
+                                       image=self._images['icon_github'],
+                                       width=self._theme.image_button_width, relief=tk.FLAT,
+                                       background=self._theme.sub_background,
+                                       activebackground=self._theme.sub_background,
+                                       command=self._open_github_button_clicked)
+        open_github_button.grid(row=0, column=2, sticky=tk.E)
 
         self._task_name_entry = tk.Entry(right_frame, font=self._theme.large_font, borderwidth=0)
         self._task_name_entry.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
@@ -384,6 +396,10 @@ class MainWindow:
             self._toggle_shows_archive_button.config(image=self._images['icon_archive_is_invisible_main'])
 
         self._update_task_treeview()
+
+    @staticmethod
+    def _open_github_button_clicked() -> None:
+        webbrowser.open('https://github.com/lpubsppop01/my_todo_app')
 
     def _key_pressed(self, event) -> None:
         if event.widget == self._task_name_entry:
