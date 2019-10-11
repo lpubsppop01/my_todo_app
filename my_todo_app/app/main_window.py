@@ -87,6 +87,9 @@ class MainWindow:
         add_image('icon_archive_is_visible_main', 'myicon_archive_is_visible_24x24.png')
         add_image('icon_archive_is_invisible_main', 'myicon_archive_is_invisible_24x24.png')
         add_image('icon_github', 'appbar.social.github.octocat.solid.png')
+        add_image('icon_my_todo', 'myicon_my_todo_16x16.png')
+
+        self._root.iconphoto(True, self._images['icon_my_todo'])
 
         left_frame = ttk.Frame(self._root, style=STYLE_LEFT_FRAME)
         left_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W))
