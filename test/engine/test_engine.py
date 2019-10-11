@@ -408,5 +408,22 @@ class TestTaskEngine(TestCase):
         self.assertEqual(engine.shown_tasks[3], engine.selected_task)
         self.assertFalse(engine.can_down_selected_task())
 
+        engine.select_task(engine.shown_tasks[0].id)
+        engine.down_selected_task()
+
+        self.assertEqual('Task2', engine.shown_tasks[0].name)
+        self.assertEqual('Task1', engine.shown_tasks[1].name)
+        self.assertEqual(engine.shown_tasks[1], engine.selected_task)
+        self.assertTrue(engine.can_up_selected_task())
+        self.assertFalse(engine.can_down_selected_task())
+
+        engine.up_selected_task()
+
+        self.assertEqual('Task1', engine.shown_tasks[0].name)
+        self.assertEqual('Task2', engine.shown_tasks[4].name)
+        self.assertEqual(engine.shown_tasks[0], engine.selected_task)
+        self.assertFalse(engine.can_up_selected_task())
+        self.assertTrue(engine.can_down_selected_task())
+
         db._conn.close()
         os.remove(db_path)

@@ -264,14 +264,29 @@ class TaskEngine:
         if self._selected_task == self._shown_tasks[first_index]:
             raise RuntimeError('The selected task is bottom one')
 
-        selected_index = self._shown_tasks.index(self._selected_task)
-        if selected_index > 1:
-            self._selected_task.sort_key = (self._shown_tasks[selected_index - 1].sort_key +
-                                            self._shown_tasks[selected_index - 2].sort_key) / 2
+        prev_index = self._get_prev_sibling_task_index()
+        assert prev_index is not None
+        next_index = self._get_next_sibling_task_index()
+
+        src_sort_key_after = self._shown_tasks[prev_index].sort_key
+        if next_index is None:
+            src_sort_key_before = self._selected_task.sort_key + 1
         else:
-            self._selected_task.sort_key = self._shown_tasks[selected_index - 1].sort_key - 1
-        self._db.upsert_task(self._selected_task)
-        self._update_shown_tasks()
+            src_sort_key_before = self._shown_tasks[next_index].sort_key
+
+        if prev_index > 0:
+            dest_sort_key_after = self._shown_tasks[prev_index - 1].sort_key
+        else:
+            dest_sort_key_after = self._shown_tasks[prev_index].sort_key - 1
+        dest_sort_key_before = self._shown_tasks[prev_index].sort_key
+
+        target_tasks = self._get_descendant_and_self_tasks(self._selected_task.id)
+        for target_task in target_tasks:
+            sort_key_ratio = (target_task.sort_key - src_sort_key_after) / (src_sort_key_before - src_sort_key_after)
+            target_task.sort_key = dest_sort_key_after + (dest_sort_key_before - dest_sort_key_after) * sort_key_ratio
+            self._db.upsert_task(target_task)
+
+        self._update_shown_tasks(selects_same_id=True)
 
     def can_down_selected_task(self) -> bool:
         if self._selected_task is None:
@@ -288,32 +303,84 @@ class TaskEngine:
         if self._selected_task == self._shown_tasks[last_index]:
             raise RuntimeError('The selected task is top one')
 
-        selected_index = self._shown_tasks.index(self._selected_task)
-        if selected_index < len(self.shown_tasks) - 2:
-            self._selected_task.sort_key = (self._shown_tasks[selected_index + 1].sort_key +
-                                            self._shown_tasks[selected_index + 2].sort_key) / 2
+        next_index = self._get_next_sibling_task_index()
+        assert next_index is not None
+        prev_index = self._get_prev_sibling_task_index()
+
+        if prev_index is None:
+            src_sort_key_after = self._selected_task.sort_key - 1
         else:
-            self._selected_task.sort_key = self._shown_tasks[selected_index + 1].sort_key + 1
-        self._db.upsert_task(self._selected_task)
-        self._update_shown_tasks()
+            src_sort_key_after = self._shown_tasks[prev_index].sort_key
+        src_sort_key_before = self._shown_tasks[next_index].sort_key
+
+        dest_sort_key_after = self._shown_tasks[next_index].sort_key
+        if next_index < len(self.shown_tasks) - 1:
+            dest_sort_key_before = self._shown_tasks[next_index + 1].sort_key
+        else:
+            dest_sort_key_before = self._shown_tasks[next_index].sort_key + 1
+
+        target_tasks = self._get_descendant_and_self_tasks(self._selected_task.id)
+        for target_task in target_tasks:
+            sort_key_ratio = (target_task.sort_key - src_sort_key_after) / (src_sort_key_before - src_sort_key_after)
+            target_task.sort_key = dest_sort_key_after + (dest_sort_key_before - dest_sort_key_after) * sort_key_ratio
+            self._db.upsert_task(target_task)
+
+        self._update_shown_tasks(selects_same_id=True)
 
     def _get_first_sibling_task_index(self):
         first_index = 0
-        if self._selected_task.parent_task_id:
-            for i in range(0, len(self._shown_tasks)):
-                if self._shown_tasks[i].parent_task_id == self._selected_task.parent_task_id:
-                    first_index = i
-                    break
+        for i in range(0, len(self._shown_tasks)):
+            if self._shown_tasks[i].parent_task_id == self._selected_task.parent_task_id:
+                first_index = i
+                break
         return first_index
 
     def _get_last_sibling_task_index(self):
         last_index = len(self._shown_tasks) - 1
-        if self._selected_task.parent_task_id:
-            for i in range(len(self._shown_tasks) - 1, -1, -1):
-                if self._shown_tasks[i].parent_task_id == self._selected_task.parent_task_id:
-                    last_index = i
-                    break
+        for i in range(len(self._shown_tasks) - 1, -1, -1):
+            if self._shown_tasks[i].parent_task_id == self._selected_task.parent_task_id:
+                last_index = i
+                break
         return last_index
+
+    def _get_next_sibling_task_index(self) -> Optional[int]:
+        next_index: Optional[int]= None
+        found = False
+        for i in range(0, len(self._shown_tasks)):
+            if self._shown_tasks[i] == self._selected_task:
+                found = True
+            elif self._shown_tasks[i].parent_task_id == self._selected_task.parent_task_id:
+                if found:
+                    next_index = i
+                    break
+        return next_index
+
+    def _get_prev_sibling_task_index(self) -> Optional[int]:
+        prev_index: Optional[int] = None
+        for i in range(0, len(self._shown_tasks)):
+            if self._shown_tasks[i] == self._selected_task:
+                break
+            elif self._shown_tasks[i].parent_task_id == self._selected_task.parent_task_id:
+                prev_index = i
+        return prev_index
+
+    def _get_descendant_and_self_tasks(self, task_id: str) -> List[Task]:
+        descendant_and_self = []
+        self_ = self._db.get_tasks(id_=task_id)
+        if self_:
+            descendant_and_self.append(self_[0])
+        for descendant in self._get_descendant_tasks(task_id):
+            descendant_and_self.append(descendant)
+        return descendant_and_self
+
+    def _get_descendant_tasks(self, task_id: str) -> List[Task]:
+        descendants = []
+        children = self._db.get_tasks(parent_task_id=task_id)
+        for child in children:
+            descendants.append(child)
+            for next_result in self._get_descendant_tasks(child.id):
+                descendants.append(next_result)
+        return descendants
 
     def _update_shown_tasklists(self):
         self._shown_tasklists = self._db.get_tasklists()
@@ -327,7 +394,7 @@ class TaskEngine:
         self._selected_tasklist = tasklist_to_select
         self._update_shown_tasks()
 
-    def _update_shown_tasks(self):
+    def _update_shown_tasks(self, selects_same_id: bool = False):
         if self._selected_tasklist:
             archived: Optional[bool] = None
             if not self._shows_archive:
@@ -338,8 +405,14 @@ class TaskEngine:
             for task in self._shown_tasks:
                 if not task_to_select_is_fixed:
                     task_to_select = task
-                    if not self._selected_task or self._selected_task.sort_key <= task.sort_key:
+                    if not self._selected_task:
                         task_to_select_is_fixed = True
+                    elif selects_same_id:
+                        if task.id == self.selected_task.id:
+                            task_to_select_is_fixed = True
+                    else:
+                        if self._selected_task.sort_key <= task.sort_key:
+                            task_to_select_is_fixed = True
             self._selected_task = task_to_select
         else:
             self._shown_tasks = []
