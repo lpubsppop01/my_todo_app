@@ -272,6 +272,7 @@ class MainWindow:
         self._task_memo_text.grid(row=2, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
                                   padx=(self._theme.margin_double, self._theme.margin),
                                   pady=(self._theme.margin_half, self._theme.margin))
+        self._task_memo_text.bind("<FocusOut>", self._task_memo_text_focused_out)
 
     def _add_tasklist_button_clicked(self) -> None:
         dialog = AddOrEditTaskListDialog(self._root, self._theme)
