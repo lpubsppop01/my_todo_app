@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- coding: utf-8-unix -*-
+# -*- coding: utf-8 -*-
 
 """The SQLite3 based task database implementation."""
 
