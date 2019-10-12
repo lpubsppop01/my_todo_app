@@ -452,7 +452,8 @@ class MainWindow:
             ttk_messagebox.showerror('Error', 'No task is selected.')
             return
 
-        self._engine.edit_selected_task(memo=self._task_memo_text.get(1.0, tk.END))
+        new_memo = self._task_memo_text.get(1.0, tk.END)[0:-1]  # Remove extra '\n'
+        self._engine.edit_selected_task(memo=new_memo)
 
     # noinspection PyUnusedLocal
     def _tasklist_treeview_selected(self, event) -> None:
