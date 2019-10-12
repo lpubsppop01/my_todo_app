@@ -453,7 +453,6 @@ class MainWindow:
             return
 
         self._engine.edit_selected_task(memo=self._task_memo_text.get(1.0, tk.END))
-        self._update_task_treeview()
 
     # noinspection PyUnusedLocal
     def _tasklist_treeview_selected(self, event) -> None:
