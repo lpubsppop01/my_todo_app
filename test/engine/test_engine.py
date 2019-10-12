@@ -238,9 +238,7 @@ class TestTaskEngine(TestCase):
         self.assertEqual(datetime_20190927_123000.timestamp(), engine.shown_tasks[1].updated_at)
 
         engine.select_task(engine.shown_tasks[1].id)
-        datetime_20190927_123500 = datetime(2019, 9, 27, 12, 35, 0)
-        with freeze_time(datetime_20190927_123500):
-            engine.archive_selected_task()
+        engine.archive_selected_task()
 
         self.assertEqual(1, len(engine.shown_tasks))
         self.assertEqual('Baz', engine.shown_tasks[0].name)
@@ -252,7 +250,6 @@ class TestTaskEngine(TestCase):
         self.assertEqual(engine.shown_tasks[0], engine.selected_task)
         self.assertEqual('Bar', engine.shown_tasks[1].name)
         self.assertTrue(engine.shown_tasks[1].archived)
-        self.assertEqual(datetime_20190927_123500.timestamp(), engine.shown_tasks[1].updated_at)
 
         db._conn.close()
         os.remove(db_path)
@@ -348,6 +345,13 @@ class TestTaskEngine(TestCase):
         engine.select_tasklist(engine.shown_tasklists[1].id)
 
         self.assertEqual(2, len(engine.shown_tasks))
+        self.assertEqual('Task1', engine.shown_tasks[0].name)
+        self.assertEqual('Sub1', engine.shown_tasks[1].name)
+        self.assertEqual(engine.shown_tasks[0], engine.selected_task)
+
+        engine.remove_selected_task()
+
+        self.assertEqual(0, len(engine.shown_tasks))
 
         db._conn.close()
         os.remove(db_path)

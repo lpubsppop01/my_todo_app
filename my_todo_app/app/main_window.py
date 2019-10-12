@@ -354,7 +354,7 @@ class MainWindow:
             ttk_messagebox.showerror('Error', 'No task is selected.')
             return
 
-        message = 'Really remove {}?'.format(self._engine.selected_task.name)
+        message = 'Really remove {} and its descendants?'.format(self._engine.selected_task.name)
         if ttk_messagebox.askokcancel('Confirm', message):
             self._engine.remove_selected_task()
             self._update_task_treeview()

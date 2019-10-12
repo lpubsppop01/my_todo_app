@@ -21,6 +21,12 @@ class InsertTo(Enum):
     LAST_CHILD = 3
 
 
+class _TrySelect(Enum):
+    FIRST = 0
+    SAME_ID = 1
+    NEAR_SORT_KEY = 2
+
+
 class TaskTreeTraversal(TreeTraversal):
     """Task tree structure traversal."""
 
@@ -62,7 +68,7 @@ class TaskEngine:
     @shows_archive.setter
     def shows_archive(self, value) -> None:
         self._shows_archive = value
-        self._update_shown_tasks()
+        self._update_shown_tasks(try_select=_TrySelect.NEAR_SORT_KEY)
 
     @property
     def shown_tasklists(self) -> List[TaskList]:
@@ -85,7 +91,7 @@ class TaskEngine:
         if not matched_tasklists:
             raise RuntimeError('Task list with passed ID is not shown')
         self._selected_tasklist = matched_tasklists[0]
-        self._update_shown_tasks()
+        self._update_shown_tasks(try_select=_TrySelect.FIRST)
 
     def select_task(self, task_id) -> None:
         matched_tasks = [t for t in self._shown_tasks if t.id == task_id]
@@ -219,7 +225,7 @@ class TaskEngine:
 
         self._selected_task = new_task
         self._db.upsert_task(self._selected_task)
-        self._update_shown_tasks()
+        self._update_shown_tasks(try_select=_TrySelect.SAME_ID)
 
     def edit_selected_task(self, name: Optional[str] = None, memo: Optional[str] = None,
                            completed: Optional[bool] = None) -> None:
@@ -235,7 +241,7 @@ class TaskEngine:
             self._selected_task.completed_at = int(datetime.now().timestamp())
         self._selected_task.updated_at = int(datetime.now().timestamp())
         self._db.upsert_task(self._selected_task)
-        self._update_shown_tasks()
+        self._update_shown_tasks(try_select=_TrySelect.SAME_ID)
 
     def can_archive_selected_task(self) -> bool:
         if self._selected_task is None:
@@ -256,7 +262,7 @@ class TaskEngine:
             target_task.archived_at = int(datetime.now().timestamp())
             self._db.upsert_task(target_task)
 
-        self._update_shown_tasks()
+        self._update_shown_tasks(try_select=_TrySelect.NEAR_SORT_KEY)
 
     def can_unarchive_selected_task(self) -> bool:
         if self._selected_task is None:
@@ -280,7 +286,7 @@ class TaskEngine:
             target_task.archived = False
             self._db.upsert_task(target_task)
 
-        self._update_shown_tasks()
+        self._update_shown_tasks(try_select=_TrySelect.SAME_ID)
 
     def can_move_selected_task(self) -> bool:
         if self._selected_task is None:
@@ -296,7 +302,7 @@ class TaskEngine:
             raise RuntimeError('Can not move sub task only')
 
         self._move_task(self._selected_task, list_id)
-        self._update_shown_tasks()
+        self._update_shown_tasks(try_select=_TrySelect.NEAR_SORT_KEY)
 
     def _move_task(self, task: Task, list_id: str):
         task.list_id = list_id
@@ -311,8 +317,11 @@ class TaskEngine:
         if self._selected_task is None:
             raise RuntimeError('No task is selected')
 
-        self._db.delete_task(self._selected_task.id)
-        self._update_shown_tasks()
+        target_tasks: List[Task] = self._task_traversal.descendants_and_self(self._selected_task)
+        for target_task in target_tasks:
+            self._db.delete_task(target_task.id)
+
+        self._update_shown_tasks(try_select=_TrySelect.NEAR_SORT_KEY)
 
     def can_up_selected_task(self) -> bool:
         if self._selected_task is None:
@@ -351,7 +360,7 @@ class TaskEngine:
             target_task.sort_key = dest_sort_key_after + (dest_sort_key_before - dest_sort_key_after) * sort_key_ratio
             self._db.upsert_task(target_task)
 
-        self._update_shown_tasks(selects_same_id=True)
+        self._update_shown_tasks(try_select=_TrySelect.SAME_ID)
 
     def can_down_selected_task(self) -> bool:
         if self._selected_task is None:
@@ -390,7 +399,7 @@ class TaskEngine:
             target_task.sort_key = dest_sort_key_after + (dest_sort_key_before - dest_sort_key_after) * sort_key_ratio
             self._db.upsert_task(target_task)
 
-        self._update_shown_tasks(selects_same_id=True)
+        self._update_shown_tasks(try_select=_TrySelect.SAME_ID)
 
     def _get_first_sibling_task_index(self):
         first_index = 0
@@ -429,24 +438,6 @@ class TaskEngine:
                 prev_index = i
         return prev_index
 
-    # def _get_descendant_and_self_tasks(self, task_id: str) -> List[Task]:
-    #     descendant_and_self = []
-    #     self_ = self._db.get_tasks(id_=task_id)
-    #     if self_:
-    #         descendant_and_self.append(self_[0])
-    #     for descendant in self._get_descendant_tasks(task_id):
-    #         descendant_and_self.append(descendant)
-    #     return descendant_and_self
-    #
-    # def _get_descendant_tasks(self, task_id: str) -> List[Task]:
-    #     descendants = []
-    #     children = self._db.get_tasks(parent_task_id=task_id)
-    #     for child in children:
-    #         descendants.append(child)
-    #         for next_result in self._get_descendant_tasks(child.id):
-    #             descendants.append(next_result)
-    #     return descendants
-
     def _update_shown_tasklists(self):
         self._shown_tasklists = self._db.get_tasklists()
         tasklist_to_select: Optional[TaskList] = None
@@ -457,9 +448,9 @@ class TaskEngine:
                 if not self._selected_tasklist or self._selected_tasklist.sort_key <= tasklist.sort_key:
                     tasklist_to_select_is_fixed = True
         self._selected_tasklist = tasklist_to_select
-        self._update_shown_tasks()
+        self._update_shown_tasks(try_select=_TrySelect.SAME_ID)
 
-    def _update_shown_tasks(self, selects_same_id: bool = False):
+    def _update_shown_tasks(self, try_select: _TrySelect):
         if self._selected_tasklist:
             archived: Optional[bool] = None
             if not self._shows_archive:
@@ -470,14 +461,16 @@ class TaskEngine:
             for task in self._shown_tasks:
                 if not task_to_select_is_fixed:
                     task_to_select = task
-                    if not self._selected_task:
+                    if not self._selected_task or try_select == _TrySelect.FIRST:
                         task_to_select_is_fixed = True
-                    elif selects_same_id:
+                    elif try_select == _TrySelect.SAME_ID:
                         if task.id == self.selected_task.id:
                             task_to_select_is_fixed = True
-                    else:
+                    elif try_select == _TrySelect.NEAR_SORT_KEY:
                         if self._selected_task.sort_key <= task.sort_key:
                             task_to_select_is_fixed = True
+                    else:
+                        assert False
             self._selected_task = task_to_select
         else:
             self._shown_tasks = []
