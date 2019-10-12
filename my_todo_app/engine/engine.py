@@ -222,7 +222,7 @@ class TaskEngine:
         self._update_shown_tasks()
 
     def edit_selected_task(self, name: Optional[str] = None, memo: Optional[str] = None,
-                           completed: Optional[bool] = None, archived: Optional[bool] = None) -> None:
+                           completed: Optional[bool] = None) -> None:
         if self._selected_task is None:
             raise RuntimeError('No task is selected')
 
@@ -233,11 +233,53 @@ class TaskEngine:
         if completed is not None:
             self._selected_task.completed = completed
             self._selected_task.completed_at = int(datetime.now().timestamp())
-        if archived is not None:
-            self._selected_task.archived = archived
-            self._selected_task.archived_at = int(datetime.now().timestamp())
         self._selected_task.updated_at = int(datetime.now().timestamp())
         self._db.upsert_task(self._selected_task)
+        self._update_shown_tasks()
+
+    def can_archive_selected_task(self) -> bool:
+        if self._selected_task is None:
+            return False
+        if self._selected_task.archived:
+            return False
+        return True
+
+    def archive_selected_task(self) -> None:
+        if not self.can_archive_selected_task():
+            raise RuntimeError('Can not archive selected task and its descendants')
+
+        target_tasks: List[Task] = self._task_traversal.descendants_and_self(self._selected_task)
+        for target_task in target_tasks:
+            if target_task.archived:
+                continue
+            target_task.archived = True
+            target_task.archived_at = int(datetime.now().timestamp())
+            self._db.upsert_task(target_task)
+
+        self._update_shown_tasks()
+
+    def can_unarchive_selected_task(self) -> bool:
+        if self._selected_task is None:
+            return False
+        if not self._selected_task.archived:
+            return False
+        ancestors: List[Task] = self._task_traversal.ancestors(self._selected_task)
+        for ancestor in ancestors:
+            if ancestor.archived:
+                return False
+        return True
+
+    def unarchive_selected_task(self):
+        if not self.can_unarchive_selected_task():
+            raise RuntimeError('Can not unarchive selected task and its descendants')
+
+        target_tasks: List[Task] = self._task_traversal.descendants_and_self(self._selected_task)
+        for target_task in target_tasks:
+            if not target_task.archived:
+                continue
+            target_task.archived = False
+            self._db.upsert_task(target_task)
+
         self._update_shown_tasks()
 
     def can_move_selected_task(self) -> bool:

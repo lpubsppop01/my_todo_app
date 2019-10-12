@@ -387,7 +387,10 @@ class MainWindow:
             ttk_messagebox.showerror('Error', 'No task is selected.')
             return
 
-        self._engine.edit_selected_task(archived=not self._engine.selected_task.archived)
+        if self._engine.selected_task.archived:
+            self._engine.unarchive_selected_task()
+        else:
+            self._engine.archive_selected_task()
         self._update_task_treeview()
 
     def _toggle_shows_archive_button_clicked(self) -> None:
@@ -519,7 +522,6 @@ class MainWindow:
             self._add_child_task_button.config(state=tk.NORMAL)
             self._remove_task_button.config(state=tk.NORMAL)
             self._complete_task_button.config(state=tk.NORMAL)
-            self._archive_task_button.config(state=tk.NORMAL)
             self._task_name_entry.config(state=tk.NORMAL)
             self._task_name_entry.insert(tk.END, self._engine.selected_task.name)
             self._task_memo_text.config(state=tk.NORMAL)
@@ -528,7 +530,6 @@ class MainWindow:
             self._add_child_task_button.config(state=tk.DISABLED)
             self._remove_task_button.config(state=tk.DISABLED)
             self._complete_task_button.config(state=tk.DISABLED)
-            self._archive_task_button.config(state=tk.DISABLED)
             self._task_name_entry.config(state=tk.DISABLED)
             self._task_memo_text.config(state=tk.DISABLED)
 
@@ -554,8 +555,16 @@ class MainWindow:
 
         if self._engine.selected_task and self._engine.selected_task.archived:
             self._archive_task_button.config(image=self._images['icon_unarchive_main'])
+            if self._engine.can_unarchive_selected_task():
+                self._archive_task_button.config(state=tk.NORMAL)
+            else:
+                self._archive_task_button.config(state=tk.DISABLED)
         else:
             self._archive_task_button.config(image=self._images['icon_archive_main'])
+            if self._engine.can_archive_selected_task():
+                self._archive_task_button.config(state=tk.NORMAL)
+            else:
+                self._archive_task_button.config(state=tk.DISABLED)
 
     # noinspection PyUnusedLocal
     def _configure(self, event):

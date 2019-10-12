@@ -240,7 +240,7 @@ class TestTaskEngine(TestCase):
         engine.select_task(engine.shown_tasks[1].id)
         datetime_20190927_123500 = datetime(2019, 9, 27, 12, 35, 0)
         with freeze_time(datetime_20190927_123500):
-            engine.edit_selected_task(archived=True)
+            engine.archive_selected_task()
 
         self.assertEqual(1, len(engine.shown_tasks))
         self.assertEqual('Baz', engine.shown_tasks[0].name)
@@ -351,6 +351,56 @@ class TestTaskEngine(TestCase):
 
         db._conn.close()
         os.remove(db_path)
+
+    def test_sub_task_archive(self):
+        class_name = self.__class__.__name__
+        func_name = sys._getframe().f_code.co_name
+        db_path = os.path.join(os.path.dirname(__file__), '{}_{}.sqlite3'.format(class_name, func_name))
+        if os.path.exists(db_path):
+            os.remove(db_path)
+        db = SQLite3TaskDatabase(db_path)
+        engine = TaskEngine(db)
+        engine.add_tasklist('Inbox')
+        with freeze_time(datetime(2019, 9, 27, 12, 0, 0)):
+            engine.add_task(name='Task1')
+        with freeze_time(datetime(2019, 9, 27, 12, 5, 0)):
+            engine.add_task(name='Task2', to=InsertTo.LAST_SIBLING)
+        engine.select_task(engine.shown_tasks[0].id)
+        with freeze_time(datetime(2019, 9, 27, 12, 10, 0)):
+            engine.add_task(name='Sub1', to=InsertTo.LAST_CHILD)
+        with freeze_time(datetime(2019, 9, 27, 12, 15, 0)):
+            engine.add_task(name='Sub2', to=InsertTo.LAST_SIBLING)
+        with freeze_time(datetime(2019, 9, 27, 12, 20, 0)):
+            engine.add_task(name='Sub3', to=InsertTo.LAST_SIBLING)
+        engine.select_task(engine.shown_tasks[3].id)
+
+        with freeze_time(datetime(2019, 9, 27, 14, 0, 0)):
+            engine.archive_selected_task()
+
+        self.assertEqual(4, len(engine.shown_tasks))
+
+        engine.shows_archive = True
+
+        self.assertEqual(5, len(engine.shown_tasks))
+
+        engine.select_task(engine.shown_tasks[3].id)
+        engine.unarchive_selected_task()
+        engine.shows_archive = False
+
+        self.assertEqual(5, len(engine.shown_tasks))
+
+        engine.select_task(engine.shown_tasks[0].id)
+        engine.archive_selected_task()
+
+        self.assertEqual(1, len(engine.shown_tasks))
+
+        engine.shows_archive = True
+
+        self.assertEqual(5, len(engine.shown_tasks))
+
+        engine.select_task(engine.shown_tasks[3].id)
+
+        self.assertFalse(engine.can_unarchive_selected_task())
 
     def test_sub_task_up_down(self):
         class_name = self.__class__.__name__
