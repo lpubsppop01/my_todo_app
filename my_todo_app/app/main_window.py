@@ -222,8 +222,9 @@ class MainWindow:
         self._task_treeview = ttk.Treeview(center_frame, show='tree', style=STYLE_TASK_TREEVIEW)
         self._task_treeview.column('#0', width=300)
         self._task_treeview.tag_configure('completed',
-                                          foreground=self._theme.main_completed_foreground,
                                           font=self._theme.normal_completed_font)
+        self._task_treeview.tag_configure('archived',
+                                          foreground=self._theme.main_completed_foreground)
         self._task_treeview.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
                                  pady=(self._theme.margin_half, self._theme.margin))
         self._task_treeview.bind('<<TreeviewSelect>>', self._task_treeview_selected)
@@ -503,7 +504,11 @@ class MainWindow:
         self._task_treeview.delete(*self._task_treeview.get_children())
         for task in self._engine.shown_tasks:
             label = task.name if task.name else 'Empty'
-            tags: Tuple[str] = ('completed',) if task.completed else ()
+            tags: Tuple[str] = tuple()
+            if task.completed:
+                tags += ('completed',)
+            if task.archived:
+                tags += ('archived',)
             self._task_treeview.insert(task.parent_task_id, tk.END, iid=task.id, text=label, values=task.id,
                                        open=True, tags=tags)
         if self._engine.selected_task:
