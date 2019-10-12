@@ -11,6 +11,7 @@ from enum import Enum
 from typing import *
 
 from my_todo_app.engine.task import TaskList, Task, TaskDatabase
+from my_todo_app.engine.tree import TreeTraversal
 
 
 class InsertTo(Enum):
@@ -20,11 +21,33 @@ class InsertTo(Enum):
     LAST_CHILD = 3
 
 
+class TaskTreeTraversal(TreeTraversal):
+    """Task tree structure traversal."""
+
+    def __init__(self, db: TaskDatabase) -> None:
+        super().__init__()
+        self._db: TaskDatabase = db
+
+    def children(self, self_: Any) -> List[Any]:
+        self_task: Task = self_
+        return self._db.get_tasks(parent_task_id=self_task.id)
+
+    def parent(self, self_: Any) -> Optional[Any]:
+        self_task: Task = self_
+        if not self_task.parent_task_id:
+            return None
+        parent_task = self._db.get_tasks(id_=self_task.parent_task_id)
+        if not parent_task:
+            return None
+        return parent_task[0]
+
+
 class TaskEngine:
     """Task management application engine."""
 
     def __init__(self, db: TaskDatabase):
         self._db: TaskDatabase = db
+        self._task_traversal: TaskTreeTraversal = TaskTreeTraversal(db)
         self._shows_archive: bool = False
         self._shown_tasklists: List[TaskList] = []
         self._shown_tasks: List[Task] = []
@@ -280,7 +303,7 @@ class TaskEngine:
             dest_sort_key_after = self._shown_tasks[prev_index].sort_key - 1
         dest_sort_key_before = self._shown_tasks[prev_index].sort_key
 
-        target_tasks = self._get_descendant_and_self_tasks(self._selected_task.id)
+        target_tasks: List[Task] = self._task_traversal.descendants_and_self(self._selected_task)
         for target_task in target_tasks:
             sort_key_ratio = (target_task.sort_key - src_sort_key_after) / (src_sort_key_before - src_sort_key_after)
             target_task.sort_key = dest_sort_key_after + (dest_sort_key_before - dest_sort_key_after) * sort_key_ratio
@@ -319,7 +342,7 @@ class TaskEngine:
         else:
             dest_sort_key_before = self._shown_tasks[next_index].sort_key + 1
 
-        target_tasks = self._get_descendant_and_self_tasks(self._selected_task.id)
+        target_tasks: List[Task] = self._task_traversal.descendants_and_self(self._selected_task)
         for target_task in target_tasks:
             sort_key_ratio = (target_task.sort_key - src_sort_key_after) / (src_sort_key_before - src_sort_key_after)
             target_task.sort_key = dest_sort_key_after + (dest_sort_key_before - dest_sort_key_after) * sort_key_ratio
@@ -344,7 +367,7 @@ class TaskEngine:
         return last_index
 
     def _get_next_sibling_task_index(self) -> Optional[int]:
-        next_index: Optional[int]= None
+        next_index: Optional[int] = None
         found = False
         for i in range(0, len(self._shown_tasks)):
             if self._shown_tasks[i] == self._selected_task:
@@ -364,23 +387,23 @@ class TaskEngine:
                 prev_index = i
         return prev_index
 
-    def _get_descendant_and_self_tasks(self, task_id: str) -> List[Task]:
-        descendant_and_self = []
-        self_ = self._db.get_tasks(id_=task_id)
-        if self_:
-            descendant_and_self.append(self_[0])
-        for descendant in self._get_descendant_tasks(task_id):
-            descendant_and_self.append(descendant)
-        return descendant_and_self
-
-    def _get_descendant_tasks(self, task_id: str) -> List[Task]:
-        descendants = []
-        children = self._db.get_tasks(parent_task_id=task_id)
-        for child in children:
-            descendants.append(child)
-            for next_result in self._get_descendant_tasks(child.id):
-                descendants.append(next_result)
-        return descendants
+    # def _get_descendant_and_self_tasks(self, task_id: str) -> List[Task]:
+    #     descendant_and_self = []
+    #     self_ = self._db.get_tasks(id_=task_id)
+    #     if self_:
+    #         descendant_and_self.append(self_[0])
+    #     for descendant in self._get_descendant_tasks(task_id):
+    #         descendant_and_self.append(descendant)
+    #     return descendant_and_self
+    #
+    # def _get_descendant_tasks(self, task_id: str) -> List[Task]:
+    #     descendants = []
+    #     children = self._db.get_tasks(parent_task_id=task_id)
+    #     for child in children:
+    #         descendants.append(child)
+    #         for next_result in self._get_descendant_tasks(child.id):
+    #             descendants.append(next_result)
+    #     return descendants
 
     def _update_shown_tasklists(self):
         self._shown_tasklists = self._db.get_tasklists()
