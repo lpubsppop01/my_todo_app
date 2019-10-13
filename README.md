@@ -1,6 +1,12 @@
 # My Todo
 
+[![Build status](https://ci.appveyor.com/api/projects/status/lrtphg25maf5eya4?svg=true)](https://ci.appveyor.com/project/lpubsppop01/my-todo-app)
+
 A todo management application for own use.
+
+## Download
+
+[My Todo Latest Build - AppVeyor](https://ci.appveyor.com/api/projects/lpubsppop01/my-todo-app/artifacts/my_todo_win32_x64.zip)
 
 ## Author
 
