@@ -15,12 +15,13 @@ class Theme:
         self._margin = 8
         self._button_width = 8
         self.fontfamily = 'Arial'
-        self._small_fontsize = 9
-        self._normal_fontsize = 12
-        self._large_fontsize = 18
+        self.monospaced_fontfamily = 'Courier'
+        self.small_fontsize = 9
+        self.normal_fontsize = 12
+        self.large_fontsize = 18
         self._accent_background = 'maroon'
         self._accent_background_selected = 'brown'
-        self._accent_foreground = 'white'
+        self._accent_foreground = 'silver'
         self._accent_foreground_selected = 'white'
         self._main_background = 'whitesmoke'
         self._main_background_selected = 'gainsboro'
@@ -69,19 +70,23 @@ class Theme:
 
     @property
     def small_font(self) -> Tuple[str, int, str]:
-        return self.fontfamily, self._normal_fontsize, ''
+        return self.fontfamily, self.small_fontsize, ''
 
     @property
     def normal_font(self) -> Tuple[str, int, str]:
-        return self.fontfamily, self._normal_fontsize, ''
+        return self.fontfamily, self.normal_fontsize, ''
 
     @property
     def normal_completed_font(self) -> Tuple[str, int, str]:
-        return self.fontfamily, self._normal_fontsize, 'overstrike'
+        return self.fontfamily, self.normal_fontsize, 'overstrike'
+
+    @property
+    def normal_monospaced_font(self) -> Tuple[str, int, str]:
+        return self.monospaced_fontfamily, self.normal_fontsize, ''
 
     @property
     def large_font(self) -> Tuple[str, int, str]:
-        return self.fontfamily, self._large_fontsize, ''
+        return self.fontfamily, self.large_fontsize, ''
 
     @property
     def margin(self) -> int:
@@ -108,6 +113,18 @@ class Theme:
         return self._accent_background
 
     @property
+    def accent_background_selected(self) -> str:
+        return self._accent_background_selected
+
+    @property
+    def accent_foreground(self) -> str:
+        return self._accent_foreground
+
+    @property
+    def accent_foreground_selected(self) -> str:
+        return self._accent_foreground_selected
+
+    @property
     def main_background(self) -> str:
         return self._main_background
 
@@ -130,3 +147,7 @@ class Theme:
     @property
     def sub_background(self) -> str:
         return self._sub_background
+
+    @property
+    def sub_foreground(self) -> str:
+        return self._sub_foreground

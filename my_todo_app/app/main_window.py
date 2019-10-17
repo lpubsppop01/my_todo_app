@@ -3,6 +3,7 @@
 
 """The main window."""
 
+import math
 import os
 import tkinter as tk
 import tkinter.messagebox as ttk_messagebox
@@ -10,6 +11,9 @@ import tkinter.scrolledtext as tk_scrolledtext
 import webbrowser
 from tkinter import ttk
 from typing import *
+
+import markdown
+from tk_html_widgets import HTMLScrolledText
 
 from my_todo_app.app.config import Config
 from my_todo_app.app.movetask_dialog import MoveTaskDialog
@@ -37,7 +41,7 @@ class MainWindow:
             self._root.state('zoomed')
         self._root.grid_rowconfigure(0, weight=1)
         self._root.grid_columnconfigure(0, weight=0)
-        self._root.grid_columnconfigure(1, weight=1, minsize=380)
+        self._root.grid_columnconfigure(1, weight=0, minsize=700)
         self._root.grid_columnconfigure(2, weight=1)
         self._root.bind('<Any-KeyPress>', self._key_pressed)
         self._root.bind("<Configure>", self._configure)
@@ -51,6 +55,7 @@ class MainWindow:
         style = ttk.Style(self._root)
         self._theme = Theme()
         self._theme.fontfamily = self._config.theme_fontfamily
+        self._theme.monospaced_fontfamily = self._config.theme_monospaced_fontfamily
         self._theme.configure(style)
         self._theme.configure_accent_treeview(style, STYLE_TASKLIST_TREEVIEW, self._theme.normal_font)
         self._theme.configure_main_treeview(style, STYLE_TASK_TREEVIEW, self._theme.normal_font)
@@ -244,15 +249,23 @@ class MainWindow:
         right_top_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
                              padx=(self._theme.margin, self._theme.margin),
                              pady=(self._theme.margin, self._theme.margin_half))
-        right_top_frame.grid_columnconfigure(2, weight=1)
+        right_top_frame.grid_columnconfigure(3, weight=1)
 
-        # zoom_up_button = tk.Button(right_top_frame, text='Zoom In', width=self._theme.text_button_width,
-        #                            relief=tk.FLAT)
-        # zoom_up_button.grid(row=0, column=0, sticky=tk.E)
-        #
-        # zoom_out_button = tk.Button(right_top_frame, text='Zoom Out', width=self._theme.text_button_width,
-        #                             relief=tk.FLAT)
-        # zoom_out_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
+        self._memo_mode_is_edit: bool = False
+
+        memo_mode_label = tk.Label(right_top_frame, text='Memo', font=self._theme.small_font,
+                                   background=self._theme.sub_background)
+        memo_mode_label.grid(row=0, column=0, sticky=tk.E)
+
+        self._memo_mode_edit_button = tk.Button(right_top_frame, text='Edit',
+                                                width=self._theme.text_button_width, relief=tk.FLAT,
+                                                command=self._memo_mode_edit_button_clicked)
+        self._memo_mode_edit_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
+
+        self._memo_mode_render_button = tk.Button(right_top_frame, text='Render',
+                                                  width=self._theme.text_button_width, relief=tk.FLAT,
+                                                  command=self._memo_mode_render_button_clicked)
+        self._memo_mode_render_button.grid(row=0, column=2, sticky=tk.E)
 
         open_github_button = tk.Button(right_top_frame,
                                        image=self._images['icon_github'],
@@ -260,7 +273,7 @@ class MainWindow:
                                        background=self._theme.sub_background,
                                        activebackground=self._theme.sub_background,
                                        command=self._open_github_button_clicked)
-        open_github_button.grid(row=0, column=2, sticky=tk.E)
+        open_github_button.grid(row=0, column=3, sticky=tk.E)
 
         self._task_name_entry = tk.Entry(right_frame, font=self._theme.large_font, borderwidth=0)
         self._task_name_entry.grid(row=1, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
@@ -268,11 +281,25 @@ class MainWindow:
                                    pady=(self._theme.margin, self._theme.margin_half))
         self._task_name_entry.bind("<FocusOut>", self._task_name_entry_focused_out)
 
-        self._task_memo_text = tk_scrolledtext.ScrolledText(right_frame, font=self._theme.normal_font, borderwidth=0)
-        self._task_memo_text.grid(row=2, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
-                                  padx=(self._theme.margin_double, self._theme.margin),
-                                  pady=(self._theme.margin_half, self._theme.margin))
+        self._task_memo_text = tk_scrolledtext.ScrolledText(right_frame, font=self._theme.normal_monospaced_font,
+                                                            borderwidth=0)
+        self._task_memo_text_grid_remember = lambda: (
+            self._task_memo_text.grid(row=2, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
+                                      padx=(self._theme.margin_double, self._theme.margin),
+                                      pady=(self._theme.margin_half, self._theme.margin))
+        )
+        self._task_memo_text_grid_remember()
         self._task_memo_text.bind("<FocusOut>", self._task_memo_text_focused_out)
+
+        self._task_memo_html_text = HTMLScrolledText(right_frame, borderwidth=0)
+        self._task_memo_html_text.html_parser.DEFAULT_TEXT_FONT_FAMILY = self._theme.fontfamily
+        self._task_memo_html_text.html_parser.PREFORMATTED_FONT_FAMILY = self._theme.monospaced_fontfamily
+        self._task_memo_html_text_grid_remember = lambda: (
+            self._task_memo_html_text.grid(row=2, column=0, sticky=(tk.N, tk.S, tk.E, tk.W),
+                                           padx=(self._theme.margin_double, self._theme.margin),
+                                           pady=(self._theme.margin_half, self._theme.margin))
+        )
+        self._task_memo_html_text_grid_remember()
 
     def _add_tasklist_button_clicked(self) -> None:
         dialog = AddOrEditTaskListDialog(self._root, self._theme)
@@ -435,6 +462,15 @@ class MainWindow:
         self._engine.edit_selected_task(name=self._task_name_entry.get())
         self._update_task_treeview()
 
+    def _memo_mode_edit_button_clicked(self) -> None:
+        self._memo_mode_is_edit = True
+        self._update_task_controls()
+
+    def _memo_mode_render_button_clicked(self) -> None:
+        self._task_memo_text_entered()
+        self._memo_mode_is_edit = False
+        self._update_task_controls()
+
     def _task_memo_text_key_pressed(self, event) -> None:
         if event.keysym == 'Return':
             self._task_memo_text_entered()
@@ -532,6 +568,8 @@ class MainWindow:
             self._task_name_entry.insert(tk.END, self._engine.selected_task.name)
             self._task_memo_text.config(state=tk.NORMAL)
             self._task_memo_text.insert(tk.END, self._engine.selected_task.memo)
+            html_str = self._markdown_to_html(self._engine.selected_task.memo)
+            self._task_memo_html_text.set_html(html_str)
         else:
             self._add_child_task_button.config(state=tk.DISABLED)
             self._remove_task_button.config(state=tk.DISABLED)
@@ -571,6 +609,55 @@ class MainWindow:
                 self._archive_task_button.config(state=tk.NORMAL)
             else:
                 self._archive_task_button.config(state=tk.DISABLED)
+
+        if self._memo_mode_is_edit:
+            self._memo_mode_edit_button.config(background=self._theme.accent_background_selected,
+                                               activebackground=self._theme.accent_background_selected,
+                                               foreground=self._theme.accent_foreground_selected,
+                                               activeforeground=self._theme.accent_foreground_selected)
+            self._memo_mode_render_button.config(background=self._theme.accent_background,
+                                                 activebackground=self._theme.accent_background,
+                                                 foreground=self._theme.accent_foreground,
+                                                 activeforeground=self._theme.accent_foreground)
+            self._task_memo_text_grid_remember()
+            self._task_memo_html_text.grid_forget()
+        else:
+            self._memo_mode_edit_button.config(background=self._theme.accent_background,
+                                               activebackground=self._theme.accent_background,
+                                               foreground=self._theme.accent_foreground,
+                                               activeforeground=self._theme.accent_foreground)
+            self._memo_mode_render_button.config(background=self._theme.accent_background_selected,
+                                                 activebackground=self._theme.accent_background_selected,
+                                                 foreground=self._theme.accent_foreground_selected,
+                                                 activeforeground=self._theme.accent_foreground_selected)
+            self._task_memo_text.grid_forget()
+            self._task_memo_html_text_grid_remember()
+
+    def _markdown_to_html(self, markdown_str: str) -> str:
+        # Generate HTMl
+        # - Set font size
+        # - Replace <h1> ～ <h6> to <p> to disable bold
+        html_str = markdown.markdown(markdown_str)
+        html_str = html_str.replace('<p', '<p style="font-size: {}px"'.format(self._theme.normal_fontsize))
+        html_str = html_str.replace('<a', '<a style="font-size: {}px"'.format(self._theme.normal_fontsize))
+        html_str = html_str.replace('<pre', '<pre style="font-size: {}px"'.format(self._theme.normal_fontsize))
+        html_str = html_str.replace('<h1', '<p style="font-size: {}px"'.format(self._theme.large_fontsize))
+        html_str = html_str.replace('</h1>', '</p>')
+        delta_fontsize = self._theme.large_fontsize - self._theme.normal_fontsize
+        h2_fontsize = int(math.floor(self._theme.normal_fontsize + delta_fontsize * 2.0 / 3.0))
+        html_str = html_str.replace('<h2', '<p style="font-size: {}px"'.format(h2_fontsize))
+        html_str = html_str.replace('</h2>', '</p>')
+        h3_fontsize = int(math.floor(self._theme.normal_fontsize + delta_fontsize * 1.0 / 3.0))
+        html_str = html_str.replace('<h3', '<p style="font-size: {}px"'.format(h3_fontsize))
+        html_str = html_str.replace('</h3>', '</p>')
+        html_str = html_str.replace('<h4', '<p style="font-size: {}px"'.format(self._theme.normal_fontsize))
+        html_str = html_str.replace('</h4>', '</p>')
+        html_str = html_str.replace('<h5', '<p style="font-size: {}px"'.format(self._theme.normal_fontsize))
+        html_str = html_str.replace('</h5>', '</p>')
+        html_str = html_str.replace('<h6', '<p style="font-size: {}px"'.format(self._theme.normal_fontsize))
+        html_str = html_str.replace('</h6>', '</p>')
+        html_str = '<html><body>{}</body></html>'.format(html_str)
+        return html_str
 
     # noinspection PyUnusedLocal
     def _configure(self, event):
