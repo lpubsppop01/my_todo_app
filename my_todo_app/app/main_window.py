@@ -12,7 +12,7 @@ import webbrowser
 from tkinter import ttk
 from typing import *
 
-import markdown
+import markdown2
 from tk_html_widgets import HTMLScrolledText
 
 from my_todo_app.app.config import Config
@@ -637,8 +637,9 @@ class MainWindow:
         # Generate HTMl
         # - Set font size
         # - Replace <h1> ～ <h6> to <p> to disable bold
-        html_str = markdown.markdown(markdown_str)
+        html_str = markdown2.markdown(markdown_str, extras=['cuddled-lists'])
         html_str = html_str.replace('<p', '<p style="font-size: {}px"'.format(self._theme.normal_fontsize))
+        html_str = html_str.replace('<li', '<li style="font-size: {}px"'.format(self._theme.normal_fontsize))
         html_str = html_str.replace('<a', '<a style="font-size: {}px"'.format(self._theme.normal_fontsize))
         html_str = html_str.replace('<pre', '<pre style="font-size: {}px"'.format(self._theme.normal_fontsize))
         html_str = html_str.replace('<h1', '<p style="font-size: {}px"'.format(self._theme.large_fontsize))
