@@ -37,8 +37,8 @@ class MoveTaskDialog:
         STYLE_FRAME = 'dialog.TFrame'
 
         style = ttk.Style(self._dialog)
-        self._theme.configure(style)
-        self._theme.configure_main_frame(style, STYLE_FRAME)
+        self._theme.configure_style(style)
+        self._theme.configure_main_frame_style(style, STYLE_FRAME)
 
         dialog_frame = ttk.Frame(self._dialog, style=STYLE_FRAME)
         dialog_frame.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W))
@@ -81,11 +81,11 @@ class MoveTaskDialog:
         bottom_frame.grid_rowconfigure(0, weight=1)
         bottom_frame.grid_columnconfigure(0, weight=1)
 
-        ok_button = tk.Button(bottom_frame, text='OK', width=self._theme.text_button_width, relief=tk.FLAT,
+        ok_button = tk.Button(bottom_frame, text='OK', **self._theme.text_button_kwargs(),
                               command=self._ok_button_clicked)
         ok_button.grid(row=0, column=0, sticky=tk.E)
 
-        cancel_button = tk.Button(bottom_frame, text='Cancel', width=self._theme.text_button_width, relief=tk.FLAT,
+        cancel_button = tk.Button(bottom_frame, text='Cancel', **self._theme.text_button_kwargs(),
                                   command=self._cancel_button_clicked)
         cancel_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
 

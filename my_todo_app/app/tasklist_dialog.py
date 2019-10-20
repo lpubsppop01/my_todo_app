@@ -33,7 +33,7 @@ class AddOrEditTaskListDialog:
     def _layout(self) -> None:
         self._dialog = tk.Toplevel(self._parent)
         self._dialog.title('Edit Task List' if self._edits else 'Add Task List')
-        self._dialog.geometry(get_center_geometry(self._parent, 300, 70))
+        self._dialog.geometry(get_center_geometry(self._parent, 300, 100))
         self._dialog.resizable(False, False)
         self._dialog.grid_rowconfigure(0, weight=1)
         self._dialog.grid_rowconfigure(1, weight=0)
@@ -44,8 +44,8 @@ class AddOrEditTaskListDialog:
         STYLE_LABEL = 'dialog.TLabel'
 
         style = ttk.Style(self._dialog)
-        self._theme.configure(style)
-        self._theme.configure_main_frame(style, STYLE_FRAME)
+        self._theme.configure_style(style)
+        self._theme.configure_main_frame_style(style, STYLE_FRAME)
         style.configure(STYLE_LABEL, font=self._theme.normal_font,
                         foreground=self._theme.main_foreground, background=self._theme.main_background)
 
@@ -77,11 +77,11 @@ class AddOrEditTaskListDialog:
         bottom_frame.grid_rowconfigure(0, weight=1)
         bottom_frame.grid_columnconfigure(0, weight=1)
 
-        ok_button = tk.Button(bottom_frame, text='OK', width=self._theme.text_button_width, relief=tk.FLAT,
+        ok_button = tk.Button(bottom_frame, text='OK', **self._theme.text_button_kwargs(),
                               command=self._ok_button_clicked)
         ok_button.grid(row=0, column=0, sticky=tk.E)
 
-        cancel_button = tk.Button(bottom_frame, text='Cancel', width=self._theme.text_button_width, relief=tk.FLAT,
+        cancel_button = tk.Button(bottom_frame, text='Cancel', **self._theme.text_button_kwargs(),
                                   command=self._cancel_button_clicked)
         cancel_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
 

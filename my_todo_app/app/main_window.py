@@ -56,12 +56,12 @@ class MainWindow:
         self._theme = Theme()
         self._theme.fontfamily = self._config.theme_fontfamily
         self._theme.monospaced_fontfamily = self._config.theme_monospaced_fontfamily
-        self._theme.configure(style)
-        self._theme.configure_accent_treeview(style, STYLE_TASKLIST_TREEVIEW, self._theme.normal_font)
-        self._theme.configure_main_treeview(style, STYLE_TASK_TREEVIEW, self._theme.normal_font)
-        self._theme.configure_accent_frame(style, STYLE_LEFT_FRAME)
-        self._theme.configure_main_frame(style, STYLE_CENTER_FRAME)
-        self._theme.configure_sub_frame(style, STYLE_RIGHT_FRAME)
+        self._theme.configure_style(style)
+        self._theme.configure_accent_treeview_style(style, STYLE_TASKLIST_TREEVIEW, self._theme.normal_font)
+        self._theme.configure_main_treeview_style(style, STYLE_TASK_TREEVIEW, self._theme.normal_font)
+        self._theme.configure_accent_frame_style(style, STYLE_LEFT_FRAME)
+        self._theme.configure_main_frame_style(style, STYLE_CENTER_FRAME)
+        self._theme.configure_sub_frame_style(style, STYLE_RIGHT_FRAME)
 
         # Avoid Treeview bug: https://bugs.python.org/issue36468
         # def fixed_map(option):
@@ -107,38 +107,33 @@ class MainWindow:
                             pady=(self._theme.margin, self._theme.margin_half))
 
         add_tasklist_button = tk.Button(left_top_frame, image=self._images['icon_add_accent'],
-                                        width=self._theme.image_button_width, relief=tk.FLAT,
-                                        background=self._theme.accent_background,
-                                        activebackground=self._theme.accent_background,
+                                        **self._theme.image_button_kwargs(),
+                                        **self._theme.accent_color_kwargs(),
                                         command=self._add_tasklist_button_clicked)
         add_tasklist_button.grid(row=0, column=0, sticky=tk.W)
 
         self._edit_tasklist_button = tk.Button(left_top_frame, image=self._images['icon_edit_accent'],
-                                               width=self._theme.image_button_width, relief=tk.FLAT,
-                                               background=self._theme.accent_background,
-                                               activebackground=self._theme.accent_background,
+                                               **self._theme.image_button_kwargs(),
+                                               **self._theme.accent_color_kwargs(),
                                                command=self._edit_tasklist_button_clicked)
         self._edit_tasklist_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._remove_tasklist_button = tk.Button(left_top_frame, image=self._images['icon_delete_accent'],
-                                                 width=self._theme.image_button_width,
-                                                 background=self._theme.accent_background,
-                                                 activebackground=self._theme.accent_background,
-                                                 relief=tk.FLAT, command=self._remove_tasklist_button_clicked)
+                                                 **self._theme.image_button_kwargs(),
+                                                 **self._theme.accent_color_kwargs(),
+                                                 command=self._remove_tasklist_button_clicked)
         self._remove_tasklist_button.grid(row=0, column=2, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._up_tasklist_button = tk.Button(left_top_frame, image=self._images['icon_arrow_up_accent'],
-                                             width=self._theme.image_button_width, relief=tk.FLAT,
-                                             background=self._theme.accent_background,
-                                             activebackground=self._theme.accent_background,
+                                             **self._theme.image_button_kwargs(),
+                                             **self._theme.accent_color_kwargs(),
                                              command=self._up_tasklist_button_clicked)
         self._up_tasklist_button.grid(row=0, column=3, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._down_tasklist_button = tk.Button(left_top_frame, image=self._images['icon_arrow_down_accent'],
-                                               width=self._theme.image_button_width,
-                                               background=self._theme.accent_background,
-                                               activebackground=self._theme.accent_background,
-                                               relief=tk.FLAT, command=self._down_tasklist_button_clicked)
+                                               **self._theme.image_button_kwargs(),
+                                               **self._theme.accent_color_kwargs(),
+                                               command=self._down_tasklist_button_clicked)
         self._down_tasklist_button.grid(row=0, column=4, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._tasklist_treeview = ttk.Treeview(left_frame, show='tree', style=STYLE_TASKLIST_TREEVIEW)
@@ -161,66 +156,57 @@ class MainWindow:
         center_top_frame.grid_columnconfigure(8, weight=1)
 
         self._add_task_button = tk.Button(center_top_frame, image=self._images['icon_add_main'],
-                                          width=self._theme.image_button_width, relief=tk.FLAT,
-                                          background=self._theme.main_background,
-                                          activebackground=self._theme.main_background,
+                                          **self._theme.image_button_kwargs(),
+                                          **self._theme.main_color_kwargs(),
                                           command=self._add_task_button_clicked)
         self._add_task_button.grid(row=0, column=0, sticky=tk.E)
 
         self._add_child_task_button = tk.Button(center_top_frame, image=self._images['icon_insert_as_last_child_main'],
-                                                width=self._theme.image_button_width, relief=tk.FLAT,
-                                                background=self._theme.main_background,
-                                                activebackground=self._theme.main_background,
+                                                **self._theme.image_button_kwargs(),
+                                                **self._theme.main_color_kwargs(),
                                                 command=self._add_child_task_button_clicked)
         self._add_child_task_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._remove_task_button = tk.Button(center_top_frame, image=self._images['icon_delete_main'],
-                                             width=self._theme.image_button_width, relief=tk.FLAT,
-                                             background=self._theme.main_background,
-                                             activebackground=self._theme.main_background,
+                                             **self._theme.image_button_kwargs(),
+                                             **self._theme.main_color_kwargs(),
                                              command=self._remove_task_button_clicked)
         self._remove_task_button.grid(row=0, column=2, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._complete_task_button = tk.Button(center_top_frame, image=self._images['icon_check_main'],
-                                               width=self._theme.image_button_width, relief=tk.FLAT,
-                                               background=self._theme.main_background,
-                                               activebackground=self._theme.main_background,
+                                               **self._theme.image_button_kwargs(),
+                                               **self._theme.main_color_kwargs(),
                                                command=self._complete_task_button_clicked)
         self._complete_task_button.grid(row=0, column=3, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._archive_task_button = tk.Button(center_top_frame, image=self._images['icon_archive_main'],
-                                              width=self._theme.image_button_width, relief=tk.FLAT,
-                                              background=self._theme.main_background,
-                                              activebackground=self._theme.main_background,
+                                              **self._theme.image_button_kwargs(),
+                                              **self._theme.main_color_kwargs(),
                                               command=self._archive_task_button_clicked)
         self._archive_task_button.grid(row=0, column=4, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._move_task_button = tk.Button(center_top_frame, image=self._images['icon_move_to_list_main'],
-                                           width=self._theme.image_button_width, relief=tk.FLAT,
-                                           background=self._theme.main_background,
-                                           activebackground=self._theme.main_background,
+                                           **self._theme.image_button_kwargs(),
+                                           **self._theme.main_color_kwargs(),
                                            command=self._move_task_button_clicked)
         self._move_task_button.grid(row=0, column=5, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._up_task_button = tk.Button(center_top_frame, image=self._images['icon_arrow_up_main'],
-                                         width=self._theme.image_button_width, relief=tk.FLAT,
-                                         background=self._theme.main_background,
-                                         activebackground=self._theme.main_background,
+                                         **self._theme.image_button_kwargs(),
+                                         **self._theme.main_color_kwargs(),
                                          command=self._up_task_button_clicked)
         self._up_task_button.grid(row=0, column=6, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._down_task_button = tk.Button(center_top_frame, image=self._images['icon_arrow_down_main'],
-                                           width=self._theme.image_button_width, relief=tk.FLAT,
-                                           background=self._theme.main_background,
-                                           activebackground=self._theme.main_background,
+                                           **self._theme.image_button_kwargs(),
+                                           **self._theme.main_color_kwargs(),
                                            command=self._down_task_button_clicked)
         self._down_task_button.grid(row=0, column=7, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._toggle_shows_archive_button = tk.Button(center_top_frame,
                                                       image=self._images['icon_archive_is_invisible_main'],
-                                                      width=self._theme.image_button_width, relief=tk.FLAT,
-                                                      background=self._theme.main_background,
-                                                      activebackground=self._theme.main_background,
+                                                      **self._theme.image_button_kwargs(),
+                                                      **self._theme.main_color_kwargs(),
                                                       command=self._toggle_shows_archive_button_clicked)
         self._toggle_shows_archive_button.grid(row=0, column=8, sticky=tk.E)
 
@@ -258,20 +244,19 @@ class MainWindow:
         memo_mode_label.grid(row=0, column=0, sticky=tk.E)
 
         self._memo_mode_edit_button = tk.Button(right_top_frame, text='Edit',
-                                                width=self._theme.text_button_width, relief=tk.FLAT,
+                                                **self._theme.text_button_kwargs(),
                                                 command=self._memo_mode_edit_button_clicked)
         self._memo_mode_edit_button.grid(row=0, column=1, sticky=tk.E, padx=(self._theme.margin, 0))
 
         self._memo_mode_render_button = tk.Button(right_top_frame, text='Render',
-                                                  width=self._theme.text_button_width, relief=tk.FLAT,
+                                                  **self._theme.text_button_kwargs(),
                                                   command=self._memo_mode_render_button_clicked)
         self._memo_mode_render_button.grid(row=0, column=2, sticky=tk.E)
 
         open_github_button = tk.Button(right_top_frame,
                                        image=self._images['icon_github'],
-                                       width=self._theme.image_button_width, relief=tk.FLAT,
-                                       background=self._theme.sub_background,
-                                       activebackground=self._theme.sub_background,
+                                       **self._theme.image_button_kwargs(),
+                                       **self._theme.sub_color_kwargs(),
                                        command=self._open_github_button_clicked)
         open_github_button.grid(row=0, column=3, sticky=tk.E)
 
@@ -611,25 +596,13 @@ class MainWindow:
                 self._archive_task_button.config(state=tk.DISABLED)
 
         if self._memo_mode_is_edit:
-            self._memo_mode_edit_button.config(background=self._theme.accent_background_selected,
-                                               activebackground=self._theme.accent_background_selected,
-                                               foreground=self._theme.accent_foreground_selected,
-                                               activeforeground=self._theme.accent_foreground_selected)
-            self._memo_mode_render_button.config(background=self._theme.accent_background,
-                                                 activebackground=self._theme.accent_background,
-                                                 foreground=self._theme.accent_foreground,
-                                                 activeforeground=self._theme.accent_foreground)
+            self._memo_mode_edit_button.config(**self._theme.accent_selected_kwargs())
+            self._memo_mode_render_button.config(**self._theme.accent_color_kwargs())
             self._task_memo_text_grid_remember()
             self._task_memo_html_text.grid_forget()
         else:
-            self._memo_mode_edit_button.config(background=self._theme.accent_background,
-                                               activebackground=self._theme.accent_background,
-                                               foreground=self._theme.accent_foreground,
-                                               activeforeground=self._theme.accent_foreground)
-            self._memo_mode_render_button.config(background=self._theme.accent_background_selected,
-                                                 activebackground=self._theme.accent_background_selected,
-                                                 foreground=self._theme.accent_foreground_selected,
-                                                 activeforeground=self._theme.accent_foreground_selected)
+            self._memo_mode_edit_button.config(**self._theme.accent_color_kwargs())
+            self._memo_mode_render_button.config(**self._theme.accent_selected_kwargs())
             self._task_memo_text.grid_forget()
             self._task_memo_html_text_grid_remember()
 

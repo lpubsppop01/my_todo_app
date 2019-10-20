@@ -32,12 +32,12 @@ class Theme:
         self._sub_foreground = 'black'
 
     # noinspection PyMethodMayBeStatic
-    def configure(self, style: ttk.Style) -> None:
+    def configure_style(self, style: ttk.Style) -> None:
         style.theme_use('default')
         style.configure('.', indicatorsize='0')  # Hide treeview indicator
         style.configure('.', indicatormargins='10')  # Set inner left margin of treeview
 
-    def configure_accent_treeview(self, style: ttk.Style, key: str, font: Tuple[str, int, str]) -> None:
+    def configure_accent_treeview_style(self, style: ttk.Style, key: str, font: Tuple[str, int, str]) -> None:
         style.configure(key,
                         font=font, rowheight=font[1] * 3,
                         relief=tk.FLAT, borderwidth=0, highlightthickness=0,
@@ -48,7 +48,7 @@ class Theme:
                   foreground=[('selected', self._accent_foreground_selected)],
                   background=[('selected', self._accent_background_selected)])
 
-    def configure_main_treeview(self, style: ttk.Style, key: str, font: Tuple[str, int, str]) -> None:
+    def configure_main_treeview_style(self, style: ttk.Style, key: str, font: Tuple[str, int, str]) -> None:
         style.configure(key,
                         font=font, rowheight=font[1] * 3,
                         relief=tk.FLAT, borderwidth=0, highlightthickness=0,
@@ -59,14 +59,44 @@ class Theme:
                   foreground=[('selected', self._main_foreground_selected)],
                   background=[('selected', self._main_background_selected)])
 
-    def configure_accent_frame(self, style: ttk.Style, key: str) -> None:
+    def configure_accent_frame_style(self, style: ttk.Style, key: str) -> None:
         style.configure(key, background=self._accent_background)
 
-    def configure_main_frame(self, style: ttk.Style, key: str) -> None:
+    def configure_main_frame_style(self, style: ttk.Style, key: str) -> None:
         style.configure(key, background=self._main_background)
 
-    def configure_sub_frame(self, style: ttk.Style, key: str) -> None:
+    def configure_sub_frame_style(self, style: ttk.Style, key: str) -> None:
         style.configure(key, background=self._sub_background)
+
+    def image_button_kwargs(self) -> Dict[str, Any]:
+        return {'width': self.image_button_width, 'relief': tk.FLAT}
+
+    def text_button_kwargs(self) -> Dict[str, Any]:
+        return {'font': self.small_font, 'width': self.text_button_width, 'relief': tk.FLAT}
+
+    def accent_color_kwargs(self) -> Dict[str, Any]:
+        return {'background': self.accent_background,
+                'activebackground': self.accent_background,
+                'foreground': self.accent_foreground,
+                'activeforeground': self.accent_foreground}
+
+    def accent_selected_kwargs(self) -> Dict[str, Any]:
+        return {'background': self.accent_background_selected,
+                'activebackground': self.accent_background_selected,
+                'foreground': self.accent_foreground_selected,
+                'activeforeground': self.accent_foreground_selected}
+
+    def main_color_kwargs(self) -> Dict[str, Any]:
+        return {'background': self.main_background,
+                'activebackground': self.main_background,
+                'foreground': self.main_foreground,
+                'activeforeground': self.main_foreground}
+
+    def sub_color_kwargs(self) -> Dict[str, Any]:
+        return {'background': self.sub_background,
+                'activebackground': self.sub_background,
+                'foreground': self.sub_foreground,
+                'activeforeground': self.sub_foreground}
 
     @property
     def small_font(self) -> Tuple[str, int, str]:
