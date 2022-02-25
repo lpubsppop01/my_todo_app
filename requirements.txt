@@ -1,9 +1,9 @@
-pytest==5.2.1
+pytest==7.0.1
 uuid==1.30
-freezegun==0.3.12
-requests==2.22.0
-svglib==0.9.2
-reportlab==3.5.28
-PyInstaller==3.5
-markdown2==2.3.8
+freezegun==1.1.0
+requests==2.27.1
+svglib==1.2.1
+reportlab==3.6.7
+PyInstaller==4.9
+markdown2==2.4.2
 tk_html_widgets==0.4.0
