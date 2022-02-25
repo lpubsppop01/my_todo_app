@@ -25,7 +25,7 @@ def download_file(url: str, path: str) -> None:
 
 def download_material_design_icon(dir_path: str, category: str, name: str) -> None:
     png_path = os.path.join(dir_path, name + '.png')
-    png_url = 'https://github.com/google/material-design-icons/raw/master/{}/1x_web/{}.png'.format(category, name)
+    png_url = 'https://github.com/google/material-design-icons/raw/3.0.2/{}/1x_web/{}.png'.format(category, name)
     download_file(png_url, png_path)
 
 
