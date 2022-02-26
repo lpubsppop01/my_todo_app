@@ -4,12 +4,13 @@
 """The application entry point."""
 
 import os
-import sys
-import uuid
 from datetime import datetime
+
+import uuid
 
 from my_todo_app.app.config import Config
 from my_todo_app.app.main_window import MainWindow
+from my_todo_app.app.my_image_set import MyImageSet
 from my_todo_app.engine.task import TaskList, TaskDatabase, Task
 from my_todo_app.engine.task_sqlite3 import SQLite3TaskDatabase
 
@@ -28,14 +29,6 @@ def get_config_path():
     return '~/.lpubsppop01/my_todo/config.json'
 
 
-# noinspection PyProtectedMember
-def get_images_path():
-    if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, 'images')
-    project_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-    return os.path.join(project_path, 'images')
-
-
 def insert_sample_if_empty(db: TaskDatabase):
     if db.get_tasklists():
         return
@@ -52,8 +45,8 @@ def main():
     db = SQLite3TaskDatabase(db_path)
     insert_sample_if_empty(db)
     config = Config(get_config_path())
-    images_path = get_images_path()
-    window = MainWindow(db, config, images_path)
+    images = MyImageSet()
+    window = MainWindow(db, config, images)
     window.show()
     db.close()
 
